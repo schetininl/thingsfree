@@ -1,2 +1,2 @@
-# thingsfree
+# thingsfree.ru
 Интернет-магазин бесплатных вещей
