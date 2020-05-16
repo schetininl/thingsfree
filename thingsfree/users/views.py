@@ -7,7 +7,7 @@ from rest_framework.response import Response
 from phone_verify.api import VerificationViewSet
 from phone_verify.serializers import PhoneSerializer, SMSVerificationSerializer
 
-from .serializers import UserSerializer
+from .serializers import CreateUserSerializer
 
 User = get_user_model()
 
@@ -26,12 +26,12 @@ class PhoneVerificationViewSet(VerificationViewSet):
         return super().register(request)
 
     @action(detail=False, methods=['POST'], permission_classes=[AllowAny],
-            serializer_class=UserSerializer)
-    def verify_and_register(self, request):
+            serializer_class=CreateUserSerializer)
+    def signup(self, request):
         serializer = SMSVerificationSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        serializer = UserSerializer(data=request.data)
+        serializer = CreateUserSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         serializer.save()
 

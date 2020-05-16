@@ -4,12 +4,16 @@ from rest_framework import serializers
 User = get_user_model()
 
 
-class UserSerializer(serializers.ModelSerializer):
+class CreateUserSerializer(serializers.ModelSerializer):
+
     class Meta:
-        fields = (
-            'username',
-            'phone_number',
-            'first_name',
-            'last_name',
-        )
         model = User
+        fields = ('username', 'phone_number', 'password')
+        extra_kwargs = {
+            'password': {
+                'write_only': True
+            }
+        }
+
+    def create(self, validated_data):
+        return User.objects.create_user(**validated_data)
