@@ -47,7 +47,7 @@ INSTALLED_APPS = [
     'offers',
     'users',
     'api',
-    'cities&regions',
+    'cities',
 ]
 
 MIDDLEWARE = [
@@ -149,7 +149,7 @@ PHONE_VERIFICATION = {
         'FROM': os.getenv('TWILIO_NUMBER'),
     },
     'TOKEN_LENGTH': 6,
-    'MESSAGE': 'Добро пожаловать в {app}! Для продолжения регистрации'
+    'MESSAGE': 'Добро пожаловать в {app}! Для продолжения регистрации '
                'используйте код: {security_code}',
     'APP_NAME': 'ThingsFree',
     'SECURITY_CODE_EXPIRATION_TIME': 3600,

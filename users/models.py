@@ -32,6 +32,10 @@ class User(AbstractUser):
     )
 
     USERNAME_FIELD = 'phone_number'
+    REQUIRED_FIELDS = ['username']
+
+    def __str__(self):
+        return self.username
 
 
 class TypeOfContact(models.Model):
