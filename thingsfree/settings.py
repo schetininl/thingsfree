@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     'offers',
     'users',
     'api',
+    'cities&regions',
 ]
 
 MIDDLEWARE = [
