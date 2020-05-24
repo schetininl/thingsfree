@@ -1,3 +1,103 @@
 from django.db import models
+from django.contrib.auth import get_user_model
+from django.core import validators
+from django.core.exceptions import ValidationError
+from django.dispatch import receiver
+from django.db.models.signals import pre_save
 
-# Create your models here.
+User = get_user_model()
+
+
+class OfferCategory(models.Model):
+    name = models.CharField(verbose_name='Наименование', max_length=50)
+
+    class Meta:
+        verbose_name = 'Категория'
+        verbose_name_plural = 'Категории'
+
+    def __str__(self):
+        return self.name
+
+
+class Region(models.Model):
+    name = models.CharField(max_length=50, verbose_name='Регион')
+
+    class Meta:
+        verbose_name = 'Регион'
+        verbose_name_plural = 'Регионы'
+
+    def __str__(self):
+        return self.name
+
+
+class City(models.Model):
+    name = models.CharField(max_length=50, verbose_name='Город')
+    region = models.ForeignKey(Region, on_delete=models.CASCADE,  related_name="cities",
+                               verbose_name='Регион')
+
+    class Meta:
+        verbose_name = 'Город'
+        verbose_name_plural = 'Города'
+
+    def __str__(self):
+        return self.name
+
+class CloseReason(models.Model):
+    name = models.CharField(max_length=50, verbose_name='Причина закрытия')
+
+    class Meta:
+        verbose_name = 'Причина закрытия'
+
+    def __str__(self):
+        return self.name
+
+
+class Offer(models.Model):
+
+    MODERATION_STATUSES_CHOICES = (
+        ('ON_MODERATION', 'На модерации'),
+        ('APPROVED', 'Одобрено'),
+        ('REFUSED', 'Отклонено'),
+    )
+
+    author = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name="offers")
+    title = models.CharField(max_length=100)
+    description = models.TextField(max_length=280)
+    category = models.ForeignKey(
+        OfferCategory, on_delete=models.SET_DEFAULT, related_name="offers",default='1')
+    # но под 1 категорией надо внести прочее, или потом поменять дефолтное значение
+    is_service = models.BooleanField()
+    is_used = models.BooleanField()
+    city = models.ForeignKey(
+        City, on_delete=models.SET_NULL, blank=True, null=True, related_name="offers")
+    pub_date = models.DateField(
+        verbose_name='Дата публикации', auto_now_add=True)
+    is_private = models.BooleanField(
+        verbose_name='Приватное/общедоступное предложение')
+    moderation_statuses = models.CharField(verbose_name='Статус модерации', max_length=50, 
+        choices=MODERATION_STATUSES_CHOICES, default='ON_MODERATION')
+    is_closed = models.BooleanField(
+        verbose_name='Открытое/закрытое предложение')
+    close_reason = models.ForeignKey(CloseReason, 
+        on_delete=models.PROTECT, blank=True, null=True, related_name="offers") 
+
+    class Meta:
+        verbose_name = 'Предложение'
+        verbose_name_plural = 'Предложения'
+
+@receiver(pre_save, sender=Offer)
+def offer_pre_save(sender, instance, **kwargs):
+    if instance.offer.photos > 5: #тут переделать  instance.offer.photos + уточнить почему нет поля photo у offer 
+        raise ValidationError("Вы не можете загрузить больше фотографий!")
+                
+
+class OfferPhoto(models.Model):
+    offer = models.ForeignKey(
+        Offer, on_delete=models.CASCADE, related_name="photo")
+    # поле для ссылки на изображение:
+    link = models.ImageField(upload_to='offers/', blank=True, null=True)
+
+    class Meta:
+        verbose_name = 'Фотография предложения'
+        verbose_name_plural = 'Фотографии предложения'
