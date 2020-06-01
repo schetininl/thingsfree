@@ -20,7 +20,7 @@ class InvalidPhoneNumber(BaseResponse):
             http_status=http_statuses.HTTP_400_BAD_REQUEST,
             application_status=400001,
             body={
-                'message': _('Phone number is not correct')
+                'message': _('Phone number is not correct.')
             }
         )
 
@@ -42,6 +42,29 @@ class SMSSendingFailed(BaseResponse):
             http_status=http_statuses.HTTP_500_INTERNAL_SERVER_ERROR,
             application_status=500001,
             body={
-                'message': _('Error in sending verification code')
+                'message': _('Error in sending verification code.')
+            }
+        )
+
+
+class ValidSecurityCode(BaseResponse):
+    def __init__(self):
+        def __init__(self):
+            super().__init__(
+                http_status=http_statuses.HTTP_200_OK,
+                application_status=200000,
+                body={
+                    'message': _('Security code is valid.')
+                }
+            )
+
+
+class InvalidSecurityCode(BaseResponse):
+    def __init__(self):
+        super().__init__(
+            http_status=http_statuses.HTTP_400_BAD_REQUEST,
+            application_status=400003,
+            body={
+                'message': _('Security code is not valid.')
             }
         )
