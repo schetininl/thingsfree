@@ -1,70 +1,34 @@
 from django.utils.translation import gettext_lazy as _
-from rest_framework import status as http_statuses
 from rest_framework.response import Response
 
 
-class BaseResponse(Response):
-    def __init__(self, http_status, application_status, body):
-        super().__init__(
-            data={
-                'status': application_status,
-                'body': body
-            },
-            status=http_status
-        )
+def create_response(status, body):
+    # статус http ответа совпадает с первыми тремя цифрами статуса бизнес-логики
+    http_status = status // 1000
+    return Response(
+        data={
+            'status': status,
+            'body': body
+        },
+        status=http_status
+    )
 
 
-class InvalidPhoneNumber(BaseResponse):
-    def __init__(self):
-        super().__init__(
-            http_status=http_statuses.HTTP_400_BAD_REQUEST,
-            application_status=400001,
-            body={
-                'message': _('Phone number is not correct.')
-            }
-        )
+def message(status, text):
+    return create_response(status, {'message': text})
 
 
-class PhoneNumberIsUsed(BaseResponse):
-    def __init__(self):
-        super().__init__(
-            http_status=http_statuses.HTTP_400_BAD_REQUEST,
-            application_status=400002,
-            body={
-                'message': _('A user with that phone already exists.')
-            }
-        )
+VALID_SECURITY_CODE = message(200000, _('Security code is valid.'))
+USER_CREATION_OK = message(201000, _('User account has been created.'))
+
+INVALID_PHONE_NUMBER = message(400001, _('Phone number is not valid.'))
+USED_PHONE_NUMBER = message(400002, _('A user with that phone already exists.'))
+INVALID_SECURITY_CODE = message(400003, _('Security code is not valid.'))
+
+SMS_SENDING_ERROR = message(500001, _('Error in sending verification code.'))
+USER_CREATION_ERROR = message(500002, _('User account has not been created.'))
 
 
-class SMSSendingFailed(BaseResponse):
-    def __init__(self):
-        super().__init__(
-            http_status=http_statuses.HTTP_500_INTERNAL_SERVER_ERROR,
-            application_status=500001,
-            body={
-                'message': _('Error in sending verification code.')
-            }
-        )
+def invalid_registration_data(errors):
+    return message(400004, errors)
 
-
-class ValidSecurityCode(BaseResponse):
-    def __init__(self):
-        def __init__(self):
-            super().__init__(
-                http_status=http_statuses.HTTP_200_OK,
-                application_status=200000,
-                body={
-                    'message': _('Security code is valid.')
-                }
-            )
-
-
-class InvalidSecurityCode(BaseResponse):
-    def __init__(self):
-        super().__init__(
-            http_status=http_statuses.HTTP_400_BAD_REQUEST,
-            application_status=400003,
-            body={
-                'message': _('Security code is not valid.')
-            }
-        )
