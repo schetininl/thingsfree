@@ -16,7 +16,8 @@ class User(AbstractUser):
         unique=True,
         error_messages={
             'unique': _('A user with that phone already exists.')
-        }
+        },
+        blank=True
     )
     avatar = models.CharField(
         _('photo'),
@@ -31,8 +32,9 @@ class User(AbstractUser):
         related_name='users'
     )
 
-    USERNAME_FIELD = 'phone_number'
-    REQUIRED_FIELDS = ['username']
+    @classmethod
+    def phone_is_used(cls, phone_number):
+        return cls.objects.filter(phone_number=phone_number).exists()
 
     def __str__(self):
         return self.username
