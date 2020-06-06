@@ -1,38 +1,61 @@
 from django.contrib.auth import get_user_model
-from django.utils.translation import gettext_lazy as _
-from phone_verify.api import VerificationViewSet
 from phone_verify.serializers import PhoneSerializer, SMSVerificationSerializer
-from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.permissions import AllowAny
-from rest_framework.response import Response
+from rest_framework.viewsets import GenericViewSet
 
+from . import responses, utils
 from .serializers import CreateUserSerializer
 
 User = get_user_model()
 
 
-class PhoneVerificationViewSet(VerificationViewSet):
+class PhoneVerificationViewSet(GenericViewSet):
 
-    @action(detail=False, methods=['POST'], permission_classes=[AllowAny],
-            serializer_class=PhoneSerializer)
+    @action(detail=False, methods=["POST"], permission_classes=[AllowAny],
+        serializer_class=PhoneSerializer)
     def register(self, request):
-        phone_number = request.data.get('phone_number')
-        if User.objects.filter(phone_number=phone_number).exists():
-            return Response(
-                {'message': _('A user with that phone already exists.')},
-                status=status.HTTP_400_BAD_REQUEST
+        serializer = PhoneSerializer(data=request.data)
+        if not serializer.is_valid():
+            return responses.INVALID_PHONE_NUMBER
+
+        phone_number = str(serializer.validated_data['phone_number'])
+        if User.phone_is_used(phone_number):
+            return responses.USED_PHONE_NUMBER
+
+        try:
+            session_token = utils.send_security_code(phone_number)
+            return responses.create_response(
+                200000,
+                {'session_token': session_token}
             )
-        return super().register(request)
+        except:
+            return responses.SMS_SENDING_ERROR
+
+    @action(detail=False, methods=["POST"], permission_classes=[AllowAny],
+        serializer_class=SMSVerificationSerializer,)
+    def verify(self, request):
+        serializer = SMSVerificationSerializer(data=request.data)
+        if not serializer.is_valid():
+            return responses.INVALID_SECURITY_CODE
+        return responses.VALID_SECURITY_CODE
 
     @action(detail=False, methods=['POST'], permission_classes=[AllowAny],
             serializer_class=CreateUserSerializer)
     def signup(self, request):
         serializer = SMSVerificationSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
+        if not serializer.is_valid():
+            return responses.INVALID_SECURITY_CODE
 
         serializer = CreateUserSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
+        if not serializer.is_valid():
+            errors = ' '.join([
+                ' '.join(msg) for msg in serializer.errors.values()
+            ])
+            return responses.invalid_registration_data(errors)
 
-        return Response(serializer.data)
+        try:
+            serializer.save()
+        except:
+            return responses.USER_CREATION_ERROR
+        return responses.USER_CREATION_OK
