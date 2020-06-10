@@ -75,11 +75,8 @@ class TestSecurityCodeSending:
             assert response_data.get('status') == 400001, \
                 msg_pattern.format('статус бизнес-логики не равен 400001')
 
-            queryset = SMSVerification.objects.filter(
-                phone_number=invalid_phone_number
-            )
-            assert not queryset.exists(), \
-                msg_pattern.format('сгенерирован код подтверждения')
+            assert not sender_mock.called, \
+                msg_pattern.format('отправляется СМС')
 
             response_body = response_data.get('body')
             assert response_body.get('message') == 'Phone number is not valid.', \
@@ -105,13 +102,36 @@ class TestSecurityCodeSending:
             assert response_data.get('status') == 400002, \
                 msg_pattern.format('статус бизнес-логики не равен 400002')
 
-            queryset = SMSVerification.objects.filter(
-                phone_number=existent_user.phone_number
-            )
-            assert not queryset.exists(), \
-                msg_pattern.format('сгенерирован код подтверждения')
+            assert not sender_mock.called, \
+                msg_pattern.format('отправляется СМС')
 
             response_body = response_data.get('body')
             actual_msg = response_body.get('message')
             assert actual_msg == 'A user with that phone already exists.', \
+                msg_pattern.format('ответ содержит неверное сообщение')
+
+    @pytest.mark.django_db(transaction=True)
+    def test_sms_sending_error(self, client, sms_sending_exception,
+                               valid_phone_number):
+
+        msg_pattern = f'При POST запросе {self.url} с неработающим бэкэндом ' \
+                      f'отправки СМС {{}}'
+
+        with mock.patch(self.sms_send_method, side_effect=sms_sending_exception):
+            request_body = {
+                'phone_number': valid_phone_number
+            }
+            response = client.post(self.url, data=request_body)
+
+            assert response.status_code == 500, \
+                msg_pattern.format('HTTP статус ответа не равен 500')
+
+            response_data = response.json()
+
+            assert response_data.get('status') == 500001, \
+                msg_pattern.format('статус бизнес-логики не равен 500001')
+
+            response_body = response_data.get('body')
+            actual_msg = response_body.get('message')
+            assert actual_msg == 'Error in sending verification code.', \
                 msg_pattern.format('ответ содержит неверное сообщение')

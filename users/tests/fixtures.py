@@ -1,4 +1,5 @@
 import pytest
+from twilio.base.exceptions import TwilioRestException
 
 
 @pytest.fixture
@@ -8,6 +9,15 @@ def sms_send_method():
     при тестировании
     """
     return 'phone_verify.backends.twilio.TwilioBackend.send_sms'
+
+
+@pytest.fixture
+def sms_sending_exception():
+    """
+    Исключение, генерируемое mock-объектом для тестирования неудачной
+    попытки отправки СМС
+    """
+    return TwilioRestException
 
 
 @pytest.fixture
