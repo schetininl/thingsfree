@@ -1,3 +1,4 @@
+from phone_verify.services import get_sms_backend
 import pytest
 from twilio.base.exceptions import TwilioRestException
 
@@ -38,3 +39,16 @@ def existent_user(django_user_model):
         phone_number='+79604566769',
         password='123456',
     )
+
+
+@pytest.fixture
+def verification_data(valid_phone_number):
+    sms_backend = get_sms_backend(valid_phone_number)
+    security_code, session_token = sms_backend\
+        .create_security_code_and_session_token(valid_phone_number)
+
+    return {
+        'phone_number': valid_phone_number,
+        'security_code': security_code,
+        'session_token': session_token
+    }

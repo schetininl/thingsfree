@@ -135,3 +135,50 @@ class TestSecurityCodeSending:
             actual_msg = response_body.get('message')
             assert actual_msg == 'Error in sending verification code.', \
                 msg_pattern.format('ответ содержит неверное сообщение')
+
+
+class TestSecurityCodeVerification:
+
+    url = '/api/v1/phone/verify/'
+
+    @pytest.mark.django_db(transaction=True)
+    def test_valid_security_code(self, client, verification_data):
+        msg_pattern = f'При POST запросе {self.url} с верным кодом ' \
+                      f'подтверждения {{}}'
+        response = client.post(self.url, data=verification_data)
+        assert response.status_code == 200, \
+            msg_pattern.format('HTTP статус ответа не равен 200')
+
+        response_data = response.json()
+        assert response_data.get('status') == 200000, \
+            msg_pattern.format('статус бизнес-логики не равен 200000')
+
+        response_body = response_data.get('body')
+        actual_msg = response_body.get('message')
+        assert actual_msg == 'Security code is valid.', \
+            msg_pattern.format('ответ содержит неверное сообщение')
+
+    @pytest.mark.django_db(transaction=True)
+    def test_invalid_security_code(self, client, verification_data):
+        msg_pattern = f'При POST запросе {self.url} с неверным кодом ' \
+                      f'подтверждения {{}}'
+
+        # чтобы получить неверный код подтверждения, подменим первый символ
+        # верного кода
+        security_code = verification_data.get('security_code')
+        security_code = chr(ord(security_code[0]) + 1) + security_code[1:]
+        invalid_verification_data = verification_data.copy()
+        invalid_verification_data['security_code'] = security_code
+
+        response = client.post(self.url, data=invalid_verification_data)
+        assert response.status_code == 400, \
+            msg_pattern.format('HTTP статус ответа не равен 400')
+
+        response_data = response.json()
+        assert response_data.get('status') == 400003, \
+            msg_pattern.format('статус бизнес-логики не равен 400003')
+
+        response_body = response_data.get('body')
+        actual_msg = response_body.get('message')
+        assert actual_msg == 'Security code is not valid.', \
+            msg_pattern.format('ответ содержит неверное сообщение')
