@@ -1,7 +1,8 @@
 from unittest import mock
 
-from phone_verify.models import SMSVerification
 import pytest
+from django.utils.translation import gettext_lazy as _
+from phone_verify.models import SMSVerification
 
 
 class TestSecurityCodeSending:
@@ -79,7 +80,8 @@ class TestSecurityCodeSending:
                 msg_pattern.format('отправляется СМС')
 
             response_body = response_data.get('body')
-            assert response_body.get('message') == 'Phone number is not valid.', \
+            actual_msg = response_body.get('message')
+            assert actual_msg == _('Phone number is not valid.'), \
                 msg_pattern.format('ответ содержит неверное сообщение')
 
     @pytest.mark.django_db(transaction=True)
@@ -107,7 +109,7 @@ class TestSecurityCodeSending:
 
             response_body = response_data.get('body')
             actual_msg = response_body.get('message')
-            assert actual_msg == 'A user with that phone already exists.', \
+            assert actual_msg == _('A user with that phone already exists.'), \
                 msg_pattern.format('ответ содержит неверное сообщение')
 
     @pytest.mark.django_db(transaction=True)
@@ -133,7 +135,7 @@ class TestSecurityCodeSending:
 
             response_body = response_data.get('body')
             actual_msg = response_body.get('message')
-            assert actual_msg == 'Error in sending verification code.', \
+            assert actual_msg == _('Error in sending verification code.'), \
                 msg_pattern.format('ответ содержит неверное сообщение')
 
 
@@ -155,7 +157,7 @@ class TestSecurityCodeVerification:
 
         response_body = response_data.get('body')
         actual_msg = response_body.get('message')
-        assert actual_msg == 'Security code is valid.', \
+        assert actual_msg == _('Security code is valid.'), \
             msg_pattern.format('ответ содержит неверное сообщение')
 
     @pytest.mark.django_db(transaction=True)
@@ -172,7 +174,7 @@ class TestSecurityCodeVerification:
 
         response_body = response_data.get('body')
         actual_msg = response_body.get('message')
-        assert actual_msg == 'Security code is not valid.', \
+        assert actual_msg == _('Security code is not valid.'), \
             msg_pattern.format('ответ содержит неверное сообщение')
 
 
@@ -194,7 +196,7 @@ class TestSignup:
 
         response_body = response_data.get('body')
         actual_msg = response_body.get('message')
-        assert actual_msg == 'User account has been created.', \
+        assert actual_msg == _('User account has been created.'), \
             msg_pattern.format('ответ содержит неверное сообщение')
 
     @pytest.mark.django_db(transaction=True)
@@ -212,7 +214,7 @@ class TestSignup:
 
         response_body = response_data.get('body')
         actual_msg = response_body.get('message')
-        assert actual_msg == 'Security code is not valid.', \
+        assert actual_msg == _('Security code is not valid.'), \
             msg_pattern.format('ответ содержит неверное сообщение')
 
     @pytest.mark.django_db(transaction=True)
