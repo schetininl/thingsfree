@@ -42,7 +42,7 @@ def existent_user(django_user_model):
 
 
 @pytest.fixture
-def verification_data(valid_phone_number):
+def valid_verification_data(valid_phone_number):
     sms_backend = get_sms_backend(valid_phone_number)
     security_code, session_token = sms_backend\
         .create_security_code_and_session_token(valid_phone_number)
@@ -51,4 +51,51 @@ def verification_data(valid_phone_number):
         'phone_number': valid_phone_number,
         'security_code': security_code,
         'session_token': session_token
+    }
+
+
+@pytest.fixture(params=('security_code', 'session_token', 'phone_number'))
+def invalid_verification_data(request, valid_verification_data):
+    """
+    Неверные данные для подтверждения телефонного номера.
+    Для генерации используются корректные данные, в которых заменяется один
+    символ.
+    Генерируются три варианта:
+    1) неверный код подтверждения
+    2) неверный токен сессии
+    3) неверный номер телефона
+    """
+    invalid_field = valid_verification_data.get(request.param)
+    invalid_field = chr(ord(invalid_field[-1]) + 1) + invalid_field[:-1]
+    invalid_verification_data = valid_verification_data.copy()
+    invalid_verification_data[request.param] = invalid_field
+
+    return invalid_verification_data
+
+
+@pytest.fixture
+def valid_signup_data(valid_verification_data):
+    return {
+        **valid_verification_data,
+        'username': 'test_user',
+        'password': '123456'
+    }
+
+
+@pytest.fixture
+def signup_data_invalid_verification(invalid_verification_data):
+    return {
+        **invalid_verification_data,
+        'username': 'test_user',
+        'password': '123456'
+    }
+
+
+@pytest.fixture(params=('test' * 40, 'test_user'),
+                ids=('too long username', 'not unique username'))
+def signup_data_invalid_username(request, existent_user, valid_verification_data):
+    return {
+        **valid_verification_data,
+        'username': request.param,
+        'password': '123456'
     }

@@ -142,10 +142,10 @@ class TestSecurityCodeVerification:
     url = '/api/v1/phone/verify/'
 
     @pytest.mark.django_db(transaction=True)
-    def test_valid_security_code(self, client, verification_data):
+    def test_valid_security_code(self, client, valid_verification_data):
         msg_pattern = f'При POST запросе {self.url} с верным кодом ' \
                       f'подтверждения {{}}'
-        response = client.post(self.url, data=verification_data)
+        response = client.post(self.url, data=valid_verification_data)
         assert response.status_code == 200, \
             msg_pattern.format('HTTP статус ответа не равен 200')
 
@@ -159,17 +159,9 @@ class TestSecurityCodeVerification:
             msg_pattern.format('ответ содержит неверное сообщение')
 
     @pytest.mark.django_db(transaction=True)
-    def test_invalid_security_code(self, client, verification_data):
+    def test_invalid_verification_data(self, client, invalid_verification_data):
         msg_pattern = f'При POST запросе {self.url} с неверным кодом ' \
                       f'подтверждения {{}}'
-
-        # чтобы получить неверный код подтверждения, подменим первый символ
-        # верного кода
-        security_code = verification_data.get('security_code')
-        security_code = chr(ord(security_code[0]) + 1) + security_code[1:]
-        invalid_verification_data = verification_data.copy()
-        invalid_verification_data['security_code'] = security_code
-
         response = client.post(self.url, data=invalid_verification_data)
         assert response.status_code == 400, \
             msg_pattern.format('HTTP статус ответа не равен 400')
@@ -182,3 +174,54 @@ class TestSecurityCodeVerification:
         actual_msg = response_body.get('message')
         assert actual_msg == 'Security code is not valid.', \
             msg_pattern.format('ответ содержит неверное сообщение')
+
+
+class TestSignup:
+
+    url = '/api/v1/phone/signup/'
+
+    @pytest.mark.django_db(transaction=True)
+    def test_successful_signup(self, client, valid_signup_data):
+        msg_pattern = f'При POST запросе {self.url} с корректными данными {{}}'
+
+        response = client.post(self.url, data=valid_signup_data)
+        assert response.status_code == 201, \
+            msg_pattern.format('HTTP статус ответа не равен 201')
+
+        response_data = response.json()
+        assert response_data.get('status') == 201000, \
+            msg_pattern.format('статус бизнес-логики не равен 201000')
+
+        response_body = response_data.get('body')
+        actual_msg = response_body.get('message')
+        assert actual_msg == 'User account has been created.', \
+            msg_pattern.format('ответ содержит неверное сообщение')
+
+    @pytest.mark.django_db(transaction=True)
+    def test_invalid_verification_data(self, client,
+                                       signup_data_invalid_verification):
+        msg_pattern = f'При POST запросе {self.url} с неверным кодом ' \
+                      f'подтверждения {{}}'
+        response = client.post(self.url, data=signup_data_invalid_verification)
+        assert response.status_code == 400, \
+            msg_pattern.format('HTTP статус ответа не равен 400')
+
+        response_data = response.json()
+        assert response_data.get('status') == 400003, \
+            msg_pattern.format('статус бизнес-логики не равен 400003')
+
+        response_body = response_data.get('body')
+        actual_msg = response_body.get('message')
+        assert actual_msg == 'Security code is not valid.', \
+            msg_pattern.format('ответ содержит неверное сообщение')
+
+    @pytest.mark.django_db(transaction=True)
+    def test_invalid_registration_data(self, client, signup_data_invalid_username):
+        msg_pattern = f'При POST запросе {self.url} с некорректным username {{}}'
+        response = client.post(self.url, data=signup_data_invalid_username)
+        assert response.status_code == 400, \
+            msg_pattern.format('HTTP статус ответа не равен 400')
+
+        response_data = response.json()
+        assert response_data.get('status') == 400004, \
+            msg_pattern.format('статус бизнес-логики не равен 400004')
