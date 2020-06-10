@@ -84,3 +84,34 @@ class TestSecurityCodeSending:
             response_body = response_data.get('body')
             assert response_body.get('message') == 'Phone number is not valid.', \
                 msg_pattern.format('ответ содержит неверное сообщение')
+
+    @pytest.mark.django_db(transaction=True)
+    def test_used_phone_number(self, client, existent_user):
+
+        msg_pattern = f'При POST запросе {self.url} телефоном, который ' \
+                      f'уже используется другим пользователем {{}}'
+
+        with mock.patch(self.sms_send_method) as sender_mock:
+            request_body = {
+                'phone_number': existent_user.phone_number
+            }
+            response = client.post(self.url, data=request_body)
+
+            assert response.status_code == 400, \
+                msg_pattern.format('HTTP статус ответа не равен 400')
+
+            response_data = response.json()
+
+            assert response_data.get('status') == 400002, \
+                msg_pattern.format('статус бизнес-логики не равен 400002')
+
+            queryset = SMSVerification.objects.filter(
+                phone_number=existent_user.phone_number
+            )
+            assert not queryset.exists(), \
+                msg_pattern.format('сгенерирован код подтверждения')
+
+            response_body = response_data.get('body')
+            actual_msg = response_body.get('message')
+            assert actual_msg == 'A user with that phone already exists.', \
+                msg_pattern.format('ответ содержит неверное сообщение')

@@ -18,3 +18,13 @@ def valid_phone_number():
 @pytest.fixture
 def invalid_phone_number():
     return 'abc123456'
+
+
+@pytest.fixture
+def existent_user(django_user_model):
+    return django_user_model.objects.create_user(
+        username='test_user',
+        email='test@user.ru',
+        phone_number='+79604566769',
+        password='123456',
+    )
