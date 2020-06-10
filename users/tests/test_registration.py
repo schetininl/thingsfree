@@ -6,6 +6,7 @@ from phone_verify.models import SMSVerification
 
 
 class TestSecurityCodeSending:
+    """Набор тестов для проверки отправки СМС с кодом подтверждения."""
 
     url = '/api/v1/phone/register/'
 
@@ -15,7 +16,6 @@ class TestSecurityCodeSending:
 
     @pytest.mark.django_db(transaction=True)
     def test_successful_sending(self, client, valid_phone_number):
-
         msg_pattern = f'При POST запросе {self.url} с валидными данными {{}}'
 
         with mock.patch(self.sms_send_method) as sender_mock:
@@ -59,7 +59,6 @@ class TestSecurityCodeSending:
 
     @pytest.mark.django_db(transaction=True)
     def test_invalid_phone_number(self, client, invalid_phone_number):
-
         msg_pattern = f'При POST запросе {self.url} с невалидными данными {{}}'
 
         with mock.patch(self.sms_send_method) as sender_mock:
@@ -86,7 +85,6 @@ class TestSecurityCodeSending:
 
     @pytest.mark.django_db(transaction=True)
     def test_used_phone_number(self, client, existent_user):
-
         msg_pattern = f'При POST запросе {self.url} телефоном, который ' \
                       f'уже используется другим пользователем {{}}'
 
@@ -115,7 +113,6 @@ class TestSecurityCodeSending:
     @pytest.mark.django_db(transaction=True)
     def test_sms_sending_error(self, client, sms_sending_exception,
                                valid_phone_number):
-
         msg_pattern = f'При POST запросе {self.url} с неработающим бэкэндом ' \
                       f'отправки СМС {{}}'
 
@@ -140,6 +137,7 @@ class TestSecurityCodeSending:
 
 
 class TestSecurityCodeVerification:
+    """Набор тестов для проверки кода подтверждения из СМС."""
 
     url = '/api/v1/phone/verify/'
 
@@ -179,7 +177,8 @@ class TestSecurityCodeVerification:
 
 
 class TestSignup:
-
+    """Набор тестов для проверки регистрации нового аккаунта."""
+    
     url = '/api/v1/phone/signup/'
 
     @pytest.mark.django_db(transaction=True)
