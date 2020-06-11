@@ -12,6 +12,10 @@ https://docs.djangoproject.com/en/3.0/ref/settings/
 
 import os
 
+from dotenv import load_dotenv
+
+load_dotenv()
+
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -37,12 +41,14 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+     'phonenumber_field',
+    'phone_verify',
     'rest_framework',
     'django_filters', 
     'offers',
     'users',
     'api',
-    'cities&regions',
+    'cities',
 ]
 
 MIDDLEWARE = [
@@ -128,12 +134,33 @@ USE_TZ = True
 STATIC_URL = '/static/'
 
 
-REST_FRAMEWORK = {
-        'DEFAULT_PERMISSION_CLASSES': [
-            'rest_framework.permissions.IsAuthenticated', 
-        ],
-        'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
-        'PAGE_SIZE': 15,
-        'DEFAULT_FILTER_BACKENDS': ['django_filters.rest_framework.DjangoFilterBackend']
-    }
+AUTH_USER_MODEL = 'users.User'
 
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+       'rest_framework_simplejwt.authentication.JWTAuthentication',
+    ],
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.IsAuthenticated',
+    ],
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+    'PAGE_SIZE': 15,
+    'DEFAULT_FILTER_BACKENDS': ['django_filters.rest_framework.DjangoFilterBackend']
+
+}
+
+
+PHONE_VERIFICATION = {
+    'BACKEND': 'phone_verify.backends.twilio.TwilioBackend',
+    'OPTIONS': {
+        'SID': os.getenv('TWILIO_SID'),
+        'SECRET': os.getenv('TWILIO_TOKEN'),
+        'FROM': os.getenv('TWILIO_NUMBER'),
+    },
+    'TOKEN_LENGTH': 6,
+    'MESSAGE': 'Добро пожаловать в {app}! Для продолжения регистрации '
+               'используйте код: {security_code}',
+    'APP_NAME': 'ThingsFree',
+    'SECURITY_CODE_EXPIRATION_TIME': 3600,
+    'VERIFY_SECURITY_CODE_ONLY_ONCE': False,
+}
