@@ -29,7 +29,7 @@ class PhoneVerificationViewSet(GenericViewSet):
                 200000,
                 {'session_token': session_token}
             )
-        except:
+        except Exception:
             return responses.SMS_SENDING_ERROR
 
     @action(detail=False, methods=["POST"], permission_classes=[AllowAny],
@@ -56,6 +56,6 @@ class PhoneVerificationViewSet(GenericViewSet):
 
         try:
             serializer.save()
-        except:
+        except Exception:
             return responses.USER_CREATION_ERROR
         return responses.USER_CREATION_OK
