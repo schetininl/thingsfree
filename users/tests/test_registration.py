@@ -25,7 +25,7 @@ class TestSecurityCodeSending:
             response = client.post(self.url, data=request_body)
 
             assert response.status_code == 200, \
-                msg_pattern.format('HTTP статус ответа не равен 200')
+                msg_pattern.format(pytest.http_status_not_200)
 
             response_data = response.json()
 
@@ -68,7 +68,7 @@ class TestSecurityCodeSending:
             response = client.post(self.url, data=request_body)
 
             assert response.status_code == 400, \
-                msg_pattern.format('HTTP статус ответа не равен 400')
+                msg_pattern.format(pytest.http_status_not_400)
 
             response_data = response.json()
 
@@ -81,7 +81,7 @@ class TestSecurityCodeSending:
             response_body = response_data.get('body')
             actual_msg = response_body.get('message')
             assert actual_msg == _('Phone number is not valid.'), \
-                msg_pattern.format('ответ содержит неверное сообщение')
+                msg_pattern.format(pytest.wrong_msg)
 
     @pytest.mark.django_db(transaction=True)
     def test_used_phone_number(self, client, existent_user):
@@ -95,7 +95,7 @@ class TestSecurityCodeSending:
             response = client.post(self.url, data=request_body)
 
             assert response.status_code == 400, \
-                msg_pattern.format('HTTP статус ответа не равен 400')
+                msg_pattern.format(pytest.http_status_not_400)
 
             response_data = response.json()
 
@@ -123,7 +123,7 @@ class TestSecurityCodeSending:
             response = client.post(self.url, data=request_body)
 
             assert response.status_code == 500, \
-                msg_pattern.format('HTTP статус ответа не равен 500')
+                msg_pattern.format(pytest.http_status_not_500)
 
             response_data = response.json()
 
@@ -147,7 +147,7 @@ class TestSecurityCodeVerification:
                       f'подтверждения {{}}'
         response = client.post(self.url, data=valid_verification_data)
         assert response.status_code == 200, \
-            msg_pattern.format('HTTP статус ответа не равен 200')
+            msg_pattern.format(pytest.http_status_not_200)
 
         response_data = response.json()
         assert response_data.get('status') == 200000, \
@@ -164,7 +164,7 @@ class TestSecurityCodeVerification:
                       f'подтверждения {{}}'
         response = client.post(self.url, data=invalid_verification_data)
         assert response.status_code == 400, \
-            msg_pattern.format('HTTP статус ответа не равен 400')
+            msg_pattern.format(pytest.http_status_not_400)
 
         response_data = response.json()
         assert response_data.get('status') == 400003, \
@@ -187,7 +187,7 @@ class TestSignup:
 
         response = client.post(self.url, data=valid_signup_data)
         assert response.status_code == 201, \
-            msg_pattern.format('HTTP статус ответа не равен 201')
+            msg_pattern.format(pytest.http_status_not_201)
 
         response_data = response.json()
         assert response_data.get('status') == 201000, \
@@ -205,7 +205,7 @@ class TestSignup:
                       f'подтверждения {{}}'
         response = client.post(self.url, data=signup_data_invalid_verification)
         assert response.status_code == 400, \
-            msg_pattern.format('HTTP статус ответа не равен 400')
+            msg_pattern.format(pytest.http_status_not_400)
 
         response_data = response.json()
         assert response_data.get('status') == 400003, \
@@ -221,7 +221,7 @@ class TestSignup:
         msg_pattern = f'При POST запросе {self.url} с некорректным username {{}}'
         response = client.post(self.url, data=signup_data_invalid_username)
         assert response.status_code == 400, \
-            msg_pattern.format('HTTP статус ответа не равен 400')
+            msg_pattern.format(pytest.http_status_not_400)
 
         response_data = response.json()
         assert response_data.get('status') == 400004, \
