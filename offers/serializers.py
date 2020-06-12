@@ -39,7 +39,7 @@ class OfferNotClosedSerializer(serializers.ModelSerializer):
 
 
 class OfferPhotoSerializer(serializers.ModelSerializer):
-    offer = serializers.SlugRelatedField(slug_field='id', read_only=True)
+  #  offer = serializers.SlugRelatedField(slug_field='id', read_only=True)
 
     class Meta:
         fields = '__all__'

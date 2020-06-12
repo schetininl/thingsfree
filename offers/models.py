@@ -73,13 +73,32 @@ class Offer(models.Model):
 #        raise ValidationError("Вы не можете загрузить больше фотографий!")
                 
 
-class OfferPhoto(models.Model):
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    offer = models.ForeignKey(
-        Offer, on_delete=models.CASCADE, related_name="photo")
-    # поле для ссылки на изображение:
-    link = models.ImageField(upload_to='offers/', blank=True, null=True)
+# class OfferPhoto(models.Model):
+#     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+#     offer = models.ForeignKey(
+#         Offer, on_delete=models.CASCADE, related_name="photo")
+#     # поле для ссылки на изображение:
+#     link = models.ImageField(upload_to='offers/', blank=True, null=True)
 
+#     class Meta:
+#         verbose_name = 'Фотография предложения'
+#         verbose_name_plural = 'Фотографии предложения'
+
+def nameFile(instance, filename):
+    return '/'.join(['photos', str(instance.link), filename])
+
+class OfferPhoto(models.Model):
+    offer = models.ForeignKey(Offer, on_delete=models.CASCADE, related_name="photos")
+    # поле для ссылки на изображение:
+    link = models.ImageField(upload_to=nameFile, blank=True, null=True)
+
+    def save(self,*args,**kwargs):
+        
+        if OfferPhoto.objects.filter(offer= self.offer.id).count()>=5:
+            return 
+        super(OfferPhoto,self).save(*args,**kwargs)
+            
+    
     class Meta:
         verbose_name = 'Фотография предложения'
-        verbose_name_plural = 'Фотографии предложения'
+        verbose_name_plural = 'Фотографии предложения'        

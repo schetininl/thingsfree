@@ -4,9 +4,10 @@ from django.contrib.auth import get_user_model
 from rest_framework import filters, mixins, viewsets
 from rest_framework.viewsets import ModelViewSet
 from rest_framework import permissions
+from rest_framework.parsers import FileUploadParser,MultiPartParser,FormParser,JSONParser
 
-from .serializers import OfferClosedSerializer, OfferNotClosedSerializer, OfferCategorySerializer
-from .models import OfferCategory, Offer
+from .serializers import OfferClosedSerializer, OfferNotClosedSerializer, OfferCategorySerializer, OfferPhotoSerializer
+from .models import OfferCategory, Offer, OfferPhoto
 from users.models import User
 
 #from .serializers import RegionSerializer, CitySerializer
@@ -58,3 +59,13 @@ class OfferCategoryViewSet(viewsets.GenericViewSet,
 #    permission_classes = [permissions.AllowAny, ]
 #    filter_backends = [filters.SearchFilter]
 #    search_fields = ['name', ]
+
+class OfferPhotoViewSet(viewsets.GenericViewSet,
+                      mixins.ListModelMixin,
+                      mixins.CreateModelMixin,
+                      mixins.DestroyModelMixin):
+    queryset = OfferPhoto.objects.all()
+    serializer_class = OfferPhotoSerializer 
+    lookup_field = 'id'
+    permission_classes = [permissions.AllowAny, ]
+    parser_classes = (MultiPartParser,FormParser,JSONParser,)
