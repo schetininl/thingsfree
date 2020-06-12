@@ -1,3 +1,5 @@
+import uuid
+
 from django.db import models
 from django.contrib.auth import get_user_model
 from django.core import validators
@@ -5,10 +7,12 @@ from django.core.exceptions import ValidationError
 from django.dispatch import receiver
 from django.db.models.signals import pre_save
 
-User = get_user_model()
+from cities.models import City, Region
+from users.models import User
 
 
 class OfferCategory(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     name = models.CharField(verbose_name='Наименование', max_length=50)
 
     class Meta:
@@ -19,30 +23,8 @@ class OfferCategory(models.Model):
         return self.name
 
 
-class Region(models.Model):
-    name = models.CharField(max_length=50, verbose_name='Регион')
-
-    class Meta:
-        verbose_name = 'Регион'
-        verbose_name_plural = 'Регионы'
-
-    def __str__(self):
-        return self.name
-
-
-class City(models.Model):
-    name = models.CharField(max_length=50, verbose_name='Город')
-    region = models.ForeignKey(Region, on_delete=models.CASCADE,  related_name="cities",
-                               verbose_name='Регион')
-
-    class Meta:
-        verbose_name = 'Город'
-        verbose_name_plural = 'Города'
-
-    def __str__(self):
-        return self.name
-
 class CloseReason(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     name = models.CharField(max_length=50, verbose_name='Причина закрытия')
 
     class Meta:
@@ -53,7 +35,7 @@ class CloseReason(models.Model):
 
 
 class Offer(models.Model):
-
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     MODERATION_STATUSES_CHOICES = (
         ('ON_MODERATION', 'На модерации'),
         ('APPROVED', 'Одобрено'),
@@ -65,8 +47,7 @@ class Offer(models.Model):
     title = models.CharField(max_length=100)
     description = models.TextField(max_length=280)
     category = models.ForeignKey(
-        OfferCategory, on_delete=models.SET_DEFAULT, related_name="offers",default='1')
-    # но под 1 категорией надо внести прочее, или потом поменять дефолтное значение
+        OfferCategory, on_delete=models.CASCADE, related_name="offers")
     is_service = models.BooleanField()
     is_used = models.BooleanField()
     city = models.ForeignKey(
@@ -93,6 +74,7 @@ def offer_pre_save(sender, instance, **kwargs):
                 
 
 class OfferPhoto(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     offer = models.ForeignKey(
         Offer, on_delete=models.CASCADE, related_name="photo")
     # поле для ссылки на изображение:

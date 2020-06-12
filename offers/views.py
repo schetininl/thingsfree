@@ -4,12 +4,13 @@ from django.contrib.auth import get_user_model
 from rest_framework import filters, mixins, viewsets
 from rest_framework.viewsets import ModelViewSet
 from rest_framework import permissions
-from .serializers import OfferClosedSerializer, OfferNotClosedSerializer, OfferCategorySerializer, RegionSerializer, CitySerializer
 
-from .models import OfferCategory, Offer, Region, City
+from .serializers import OfferClosedSerializer, OfferNotClosedSerializer, OfferCategorySerializer
+from .models import OfferCategory, Offer
+from users.models import User
 
-User = get_user_model()
-
+#from .serializers import RegionSerializer, CitySerializer
+#from cities.models import City, Region
 
 
 
@@ -33,27 +34,27 @@ class OfferCategoryViewSet(viewsets.GenericViewSet,
     search_fields = ['name', ]
 
 
-class RegionViewSet(viewsets.GenericViewSet,
-                      mixins.ListModelMixin,
-                      mixins.CreateModelMixin,
-                      mixins.DestroyModelMixin):
+#class RegionViewSet(viewsets.GenericViewSet,
+#                      mixins.ListModelMixin,
+#                      mixins.CreateModelMixin,
+#                      mixins.DestroyModelMixin):
 
-    queryset = Region.objects.all()
-    serializer_class = RegionSerializer
-    lookup_field = 'id'
-    permission_classes = [permissions.AllowAny, ]
-    filter_backends = [filters.SearchFilter]
-    search_fields = ['name', ]    
+#    queryset = Region.objects.all()
+#    serializer_class = RegionSerializer
+#    lookup_field = 'id'
+#    permission_classes = [permissions.AllowAny, ]
+#    filter_backends = [filters.SearchFilter]
+#    search_fields = ['name', ]    
 
 
-class CityViewSet(viewsets.GenericViewSet,
-                      mixins.ListModelMixin,
-                      mixins.CreateModelMixin,
-                      mixins.DestroyModelMixin):
+#class CityViewSet(viewsets.GenericViewSet,
+#                      mixins.ListModelMixin,
+#                      mixins.CreateModelMixin,
+#                      mixins.DestroyModelMixin):
 
-    queryset = City.objects.all()
-    serializer_class = CitySerializer
-    lookup_field = 'id'
-    permission_classes = [permissions.AllowAny, ]
-    filter_backends = [filters.SearchFilter]
-    search_fields = ['name', ]
+#    queryset = City.objects.all()
+#    serializer_class = CitySerializer
+#    lookup_field = 'id'
+#    permission_classes = [permissions.AllowAny, ]
+#    filter_backends = [filters.SearchFilter]
+#    search_fields = ['name', ]
