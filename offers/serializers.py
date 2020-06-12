@@ -1,7 +1,7 @@
 from rest_framework import serializers
 
-from .models import OfferCategory, Offer, OfferPhoto, City, Region, CloseReason
-
+from .models import OfferCategory, Offer, OfferPhoto, CloseReason
+from cities.models import City #, Region
 
 class CloseReasonSerializer(serializers.ModelSerializer):
 
@@ -46,15 +46,15 @@ class OfferPhotoSerializer(serializers.ModelSerializer):
         model = OfferPhoto
 
 
-class CitySerializer(serializers.ModelSerializer):
-    region = serializers.SlugRelatedField(slug_field='id', queryset = Region.objects.all())
+#class CitySerializer(serializers.ModelSerializer):
+#    region = serializers.SlugRelatedField(slug_field='id', queryset = Region.objects.all())
 
-    class Meta:
-        fields = '__all__'
-        model = City
+#    class Meta:
+#        fields = '__all__'
+#        model = City
 
         
-class RegionSerializer(serializers.ModelSerializer):
-    class Meta:
-        fields = '__all__'
-        model = Region
+#class RegionSerializer(serializers.ModelSerializer):
+#    class Meta:
+#        fields = '__all__'
+#        model = Region
