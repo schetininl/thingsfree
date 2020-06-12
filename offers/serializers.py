@@ -1,7 +1,7 @@
 from rest_framework import serializers
 
 from .models import OfferCategory, Offer, OfferPhoto, CloseReason
-from cities.models import City #, Region
+from cities.models import City#, Region
 
 class CloseReasonSerializer(serializers.ModelSerializer):
 
@@ -31,7 +31,7 @@ class OfferClosedSerializer(serializers.ModelSerializer):
 class OfferNotClosedSerializer(serializers.ModelSerializer):
     author = serializers.SlugRelatedField(slug_field='username', read_only=True)
     category = serializers.SlugRelatedField(slug_field='id', queryset = OfferCategory.objects.all())
-    city = serializers.SlugRelatedField(slug_field='id', queryset = City.objects.all())
+    city = serializers.SlugRelatedField(slug_field='id', queryset = City.objects.all(), required=False)
     
     class Meta:
         exclude = ['close_reason']

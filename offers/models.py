@@ -7,7 +7,7 @@ from django.core.exceptions import ValidationError
 from django.dispatch import receiver
 from django.db.models.signals import pre_save
 
-from cities.models import City, Region
+from cities.models import City#, Region
 from users.models import User
 
 
@@ -67,10 +67,10 @@ class Offer(models.Model):
         verbose_name = 'Предложение'
         verbose_name_plural = 'Предложения'
 
-@receiver(pre_save, sender=Offer)
-def offer_pre_save(sender, instance, **kwargs):
-    if instance.offer.photos > 5: #тут переделать  instance.offer.photos + уточнить почему нет поля photo у offer 
-        raise ValidationError("Вы не можете загрузить больше фотографий!")
+#@receiver(pre_save, sender=Offer)
+#def offer_pre_save(sender, instance, **kwargs):
+#    if instance.photos > 5: #тут переделать  instance.offer.photos + уточнить почему нет поля photo у offer 
+#        raise ValidationError("Вы не можете загрузить больше фотографий!")
                 
 
 class OfferPhoto(models.Model):
