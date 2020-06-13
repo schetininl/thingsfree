@@ -12,6 +12,10 @@ https://docs.djangoproject.com/en/3.0/ref/settings/
 
 import os
 
+from dotenv import load_dotenv
+
+load_dotenv()
+
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -37,10 +41,13 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'phonenumber_field',
+    'phone_verify',
+    'rest_framework',
     'offers',
     'users',
     'api',
-    'cities&regions',
+    'cities',
 ]
 
 MIDDLEWARE = [
@@ -122,3 +129,29 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/3.0/howto/static-files/
 
 STATIC_URL = '/static/'
+
+AUTH_USER_MODEL = 'users.User'
+
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+       'rest_framework_simplejwt.authentication.JWTAuthentication',
+    ],
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.IsAuthenticated',
+    ],
+}
+
+PHONE_VERIFICATION = {
+    'BACKEND': 'phone_verify.backends.twilio.TwilioBackend',
+    'OPTIONS': {
+        'SID': os.getenv('TWILIO_SID'),
+        'SECRET': os.getenv('TWILIO_TOKEN'),
+        'FROM': os.getenv('TWILIO_NUMBER'),
+    },
+    'TOKEN_LENGTH': 6,
+    'MESSAGE': 'Добро пожаловать в {app}! Для продолжения регистрации '
+               'используйте код: {security_code}',
+    'APP_NAME': 'ThingsFree',
+    'SECURITY_CODE_EXPIRATION_TIME': 3600,
+    'VERIFY_SECURITY_CODE_ONLY_ONCE': False,
+}
