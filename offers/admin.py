@@ -4,6 +4,7 @@ from .models import Offer, OfferCategory, OfferPhoto
 
 
 class OfferAdmin(admin.ModelAdmin):
+<<<<<<< HEAD
     list_display = ("pk", "author", "title", "description", "category", "is_service",
      "is_used", "city", "pub_date", "is_private", "moderation_statuses", "is_closed", "close_reason")
     empty_value_display = "-пусто-"
