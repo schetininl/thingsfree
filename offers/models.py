@@ -88,6 +88,8 @@ def nameFile(instance, filename):
     return '/'.join(['photos', str(instance.link), filename])
 
 class OfferPhoto(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+
     offer = models.ForeignKey(Offer, on_delete=models.CASCADE, related_name="photos")
     # поле для ссылки на изображение:
     link = models.ImageField(upload_to=nameFile, blank=True, null=True)
