@@ -1,4 +1,8 @@
-from .common import *
+import os
+
+from . import common
+
+globals().update(vars(common))
 
 
 DEBUG = False
