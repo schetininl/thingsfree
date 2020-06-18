@@ -51,6 +51,16 @@ def existent_user(django_user_model, default_password):
 
 
 @pytest.fixture
+def nonexistent_user():
+    """Данные несуществующего пользователя."""
+    return {
+        'username': 'unknown_username',
+        'email': 'unknown@mail.ru',
+        'phone_number': '+79001234567'
+    }
+
+
+@pytest.fixture
 def valid_verification_data(valid_phone_number):
     """Корректные данные для подтверждения телефонного номера."""
     sms_backend = get_sms_backend(valid_phone_number)
