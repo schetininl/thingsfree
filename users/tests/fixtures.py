@@ -34,13 +34,19 @@ def invalid_phone_number():
 
 
 @pytest.fixture
-def existent_user(django_user_model):
+def default_password():
+    """Пароль для создаваемых пользователей."""
+    return '123456'
+
+
+@pytest.fixture
+def existent_user(django_user_model, default_password):
     """Имеющийся в базе данных пользователь."""
     return django_user_model.objects.create_user(
         username='test_user',
         email='test@user.ru',
         phone_number='+79604566769',
-        password='123456',
+        password=default_password,
     )
 
 
