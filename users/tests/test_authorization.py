@@ -63,3 +63,27 @@ class TestTokenObtain:
         actual_msg = response_body.get('message')
         assert actual_msg == _('User not found.'), \
             msg_pattern.format(pytest.wrong_msg)
+
+    @pytest.mark.django_db(transaction=True)
+    @pytest.mark.parametrize('user_field', ['username', 'email', 'phone_number'])
+    def test_wrong_password(self, client, existent_user, default_password, user_field):
+        msg_pattern = f'При POST запросе {self.url} с неверным паролем {{}}'
+
+        request_body = {
+            'user': getattr(existent_user, user_field),
+            'password': default_password + '1'
+        }
+        response = client.post(self.url, data=request_body)
+
+        assert response.status_code == 400, \
+            msg_pattern.format(pytest.http_status_not_400)
+
+        response_data = response.json()
+
+        assert response_data.get('status') == 400006, \
+            msg_pattern.format('статус бизнес-логики не равен 400006')
+
+        response_body = response_data.get('body')
+        actual_msg = response_body.get('message')
+        assert actual_msg == _('Wrong password.'), \
+            msg_pattern.format(pytest.wrong_msg)
