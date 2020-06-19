@@ -106,3 +106,53 @@ class TestTokenObtain:
         actual_msg = response_body.get('message')
         assert actual_msg == _('The user is blocked.'), \
             msg_pattern.format(pytest.wrong_msg)
+
+
+class TestTokenRefresh:
+    """Набор тестов для тестирования обновления токена доступа."""
+
+    url = '/api/v1/token/refresh/'
+
+    @pytest.mark.django_db(transaction=True)
+    def test_successful_refresh(self, client, refresh_token):
+        msg_pattern = f'При POST запросе {self.url} с валидными данными {{}}'
+
+        request_body = {
+            'refresh': refresh_token
+        }
+        response = client.post(self.url, data=request_body)
+
+        assert response.status_code == 200, \
+            msg_pattern.format(pytest.http_status_not_200)
+
+        response_data = response.json()
+
+        assert response_data.get('status') == 200000, \
+            msg_pattern.format('статус бизнес-логики не равен 200000')
+
+        response_body = response_data.get('body')
+        access_token = response_body.get('access', '')
+        assert access_token != '', \
+            msg_pattern.format('в теле ответа не содержится токен доступа')
+
+    @pytest.mark.django_db(transaction=True)
+    def test_invalid_refres_token(self, client, invalid_refresh_token):
+        msg_pattern = f'При POST запросе {self.url} с невалидными данными {{}}'
+
+        request_body = {
+            'refresh': invalid_refresh_token
+        }
+        response = client.post(self.url, data=request_body)
+
+        assert response.status_code == 400, \
+            msg_pattern.format(pytest.http_status_not_400)
+
+        response_data = response.json()
+
+        assert response_data.get('status') == 400008, \
+            msg_pattern.format('статус бизнес-логики не равен 400008')
+
+        response_body = response_data.get('body')
+        actual_msg = response_body.get('message')
+        assert actual_msg == _('Invalid refresh-token.'), \
+            msg_pattern.format(pytest.wrong_msg)

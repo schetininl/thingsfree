@@ -1,5 +1,6 @@
 from phone_verify.services import get_sms_backend
 import pytest
+from rest_framework_simplejwt.tokens import RefreshToken
 from twilio.base.exceptions import TwilioRestException
 
 
@@ -70,6 +71,23 @@ def blocked_user(django_user_model, default_password):
         password=default_password,
         is_active=False
     )
+
+
+@pytest.fixture
+def refresh_token(existent_user):
+    """Refresh-токен для существующего пользователя."""
+    refresh = RefreshToken.for_user(existent_user)
+    return str(refresh)
+
+
+
+@pytest.fixture
+def invalid_refresh_token(refresh_token):
+    """
+    Невалидный refresh-токен. Генерируется на основе валидного токена путем
+    удаления одного символа.
+    """
+    return refresh_token[:-1]
 
 
 @pytest.fixture
