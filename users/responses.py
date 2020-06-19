@@ -27,6 +27,7 @@ INVALID_SECURITY_CODE = message(400003, _('Security code is not valid.'))
 USER_NOT_FOUND = message(400005, _('User not found.'))
 WRONG_PASSWORD = message(400006, _('Wrong password.'))
 USER_IS_BLOCKED = message(400007, _('The user is blocked.'))
+INVALID_REFRESH_TOKEN = message(400008, _('Invalid refresh-token.'))
 
 SMS_SENDING_ERROR = message(500001, _('Error in sending verification code.'))
 USER_CREATION_ERROR = message(500002, _('User account has not been created.'))

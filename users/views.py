@@ -4,8 +4,10 @@ from rest_framework.decorators import action
 from rest_framework.exceptions import AuthenticationFailed, PermissionDenied
 from rest_framework.permissions import AllowAny
 from rest_framework.viewsets import GenericViewSet
+from rest_framework_simplejwt.exceptions import TokenError
 from rest_framework_simplejwt.views import \
-    TokenObtainPairView as BaseTokenObtainPairView
+    TokenObtainPairView as BaseTokenObtainPairView, \
+    TokenRefreshView as BaseTokenRefreshView
 
 from . import responses, utils
 from .serializers import CreateUserSerializer, TokenObtainPairSerializer
@@ -80,6 +82,21 @@ class TokenObtainPairView(BaseTokenObtainPairView):
             return responses.USER_IS_BLOCKED
         except Exception as err:
             print('Look: ', err)
+            return responses.TOKEN_GENERATION_ERROR
+
+        return responses.create_response(200000, serializer.validated_data)
+
+
+class TokenRefreshView(BaseTokenRefreshView):
+
+    def post(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+
+        try:
+            serializer.is_valid(raise_exception=True)
+        except TokenError:
+            return responses.INVALID_REFRESH_TOKEN
+        except Exception:
             return responses.TOKEN_GENERATION_ERROR
 
         return responses.create_response(200000, serializer.validated_data)
