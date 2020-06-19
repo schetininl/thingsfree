@@ -61,6 +61,18 @@ def nonexistent_user():
 
 
 @pytest.fixture
+def blocked_user(django_user_model, default_password):
+    """Заблокированный пользователь."""
+    return django_user_model.objects.create_user(
+        username='blocked_user',
+        email='blocked@user.ru',
+        phone_number='+79604566770',
+        password=default_password,
+        is_active=False
+    )
+
+
+@pytest.fixture
 def valid_verification_data(valid_phone_number):
     """Корректные данные для подтверждения телефонного номера."""
     sms_backend = get_sms_backend(valid_phone_number)
