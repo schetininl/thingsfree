@@ -1,4 +1,5 @@
 import os
+from datetime import timedelta
 
 from . import common
 
@@ -18,6 +19,12 @@ DATABASES = {
         'HOST': os.getenv('DB_HOST'),
         'PORT': os.getenv('DB_PORT'),
     }
+}
+
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=15),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
+    'ROTATE_REFRESH_TOKENS': True,
 }
 
 SOCIAL_AUTH_POSTGRES_JSONFIELD = True

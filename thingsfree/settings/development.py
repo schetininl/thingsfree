@@ -1,4 +1,5 @@
 import os
+from datetime import timedelta
 
 from . import common
 
@@ -14,4 +15,10 @@ DATABASES = {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': os.path.join(common.BASE_DIR, 'db.sqlite3'),
     }
+}
+
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(days=5),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=14),
+    'ROTATE_REFRESH_TOKENS': True,
 }

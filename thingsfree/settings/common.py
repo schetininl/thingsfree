@@ -1,5 +1,4 @@
 import os
-from datetime import timedelta
 
 from dotenv import load_dotenv
 
@@ -90,7 +89,6 @@ AUTHENTICATION_BACKENDS = [
     'social_core.backends.vk.VKOAuth2',
     'social_core.backends.odnoklassniki.OdnoklassnikiOAuth2',
     'social_core.backends.facebook.FacebookOAuth2',
-
 ]
 
 SOCIAL_AUTH_VK_OAUTH2_KEY = os.getenv('VK_APP_ID')
@@ -109,10 +107,6 @@ REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.IsAuthenticated',
     ],
-}
-
-SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(days=1)
 }
 
 PHONE_VERIFICATION = {
