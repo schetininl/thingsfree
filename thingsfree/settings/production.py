@@ -19,3 +19,5 @@ DATABASES = {
         'PORT': os.getenv('DB_PORT'),
     }
 }
+
+SOCIAL_AUTH_POSTGRES_JSONFIELD = True

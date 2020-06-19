@@ -11,4 +11,5 @@ urlpatterns = [
     path('', include(router.urls)),
     path('token/', views.TokenObtainPairView.as_view()),
     path('token/refresh/', views.TokenRefreshView.as_view()),
+    path('social/', include('rest_framework_social_oauth2.urls')),
 ]

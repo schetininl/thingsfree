@@ -22,6 +22,9 @@ INSTALLED_APPS = [
     'phonenumber_field',
     'phone_verify',
     'rest_framework',
+    'oauth2_provider',
+    'social_django',
+    'rest_framework_social_oauth2',
     'offers',
     'users',
     'api',
@@ -84,11 +87,24 @@ STATIC_URL = '/static/'
 AUTH_USER_MODEL = 'users.User'
 AUTHENTICATION_BACKENDS = [
     'users.backends.AuthenticationBackend',
+    'social_core.backends.vk.VKOAuth2',
+    'social_core.backends.odnoklassniki.OdnoklassnikiOAuth2',
+    'social_core.backends.facebook.FacebookOAuth2',
+
 ]
+
+SOCIAL_AUTH_VK_OAUTH2_KEY = os.getenv('VK_APP_ID')
+SOCIAL_AUTH_VK_OAUTH2_SECRET = os.getenv('VK_APP_SECRET_KEY')
+SOCIAL_AUTH_ODNOKLASSNIKI_OAUTH2_KEY = os.getenv('ODNOKLASSNIKI_APP_ID')
+SOCIAL_AUTH_ODNOKLASSNIKI_OAUTH2_SECRET = os.getenv('ODNOKLASSNIKI_APP_SECRET')
+SOCIAL_AUTH_FACEBOOK_KEY = os.getenv('FACEBOOK_APP_ID')
+SOCIAL_AUTH_FACEBOOK_SECRET = os.getenv('FACEBOOK_APP_SECRET')
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
-       'rest_framework_simplejwt.authentication.JWTAuthentication',
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+        'oauth2_provider.contrib.rest_framework.OAuth2Authentication',
+        'rest_framework_social_oauth2.authentication.SocialAuthentication',
     ],
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.IsAuthenticated',
