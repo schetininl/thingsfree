@@ -1,11 +1,14 @@
 from django.contrib.auth import get_user_model
 from phone_verify.serializers import PhoneSerializer, SMSVerificationSerializer
 from rest_framework.decorators import action
+from rest_framework.exceptions import AuthenticationFailed, PermissionDenied
 from rest_framework.permissions import AllowAny
 from rest_framework.viewsets import GenericViewSet
+from rest_framework_simplejwt.views import \
+    TokenObtainPairView as BaseTokenObtainPairView
 
 from . import responses, utils
-from .serializers import CreateUserSerializer
+from .serializers import CreateUserSerializer, TokenObtainPairSerializer
 
 User = get_user_model()
 
@@ -59,3 +62,24 @@ class PhoneVerificationViewSet(GenericViewSet):
         except Exception:
             return responses.USER_CREATION_ERROR
         return responses.USER_CREATION_OK
+
+
+class TokenObtainPairView(BaseTokenObtainPairView):
+    serializer_class = TokenObtainPairSerializer
+
+    def post(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+
+        try:
+            serializer.is_valid(raise_exception=True)
+        except User.DoesNotExist:
+            return responses.USER_NOT_FOUND
+        except AuthenticationFailed:
+            return responses.WRONG_PASSWORD
+        except PermissionDenied:
+            return responses.USER_IS_BLOCKED
+        except Exception as err:
+            print('Look: ', err)
+            return responses.TOKEN_GENERATION_ERROR
+
+        return responses.create_response(200000, serializer.validated_data)

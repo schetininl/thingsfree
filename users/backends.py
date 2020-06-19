@@ -1,6 +1,7 @@
 from django.contrib.auth import get_user_model
 from django.contrib.auth.backends import ModelBackend
 from django.db.models import Q
+from rest_framework.exceptions import AuthenticationFailed, PermissionDenied
 
 UserModel = get_user_model()
 
@@ -12,6 +13,7 @@ class AuthenticationBackend(ModelBackend):
     """
     def authenticate(self, request, username=None, password=None, **kwargs):
         search_fields = ('username', 'email', 'phone_number')
+        raise_exception = kwargs.get('raise_exception', False)
         if username is None:
             for field in search_fields:
                 username = kwargs.get(field)
@@ -33,8 +35,16 @@ class AuthenticationBackend(ModelBackend):
                     user = queryset.first()
                 else:
                     raise UserModel.DoesNotExist
-        except UserModel.DoesNotExist:
+        except UserModel.DoesNotExist as err:
             UserModel().set_password(password)
+            if raise_exception:
+                raise err
         else:
-            if user.check_password(password) and self.user_can_authenticate(user):
+            if not user.check_password(password):
+                if raise_exception:
+                    raise AuthenticationFailed
+            elif not self.user_can_authenticate(user):
+                if raise_exception:
+                    raise PermissionDenied
+            else:
                 return user

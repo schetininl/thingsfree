@@ -1,5 +1,7 @@
-from django.contrib.auth import get_user_model
+from django.contrib.auth import authenticate, get_user_model
 from rest_framework import serializers
+from rest_framework_simplejwt.serializers import \
+    TokenObtainPairSerializer as BaseTokenObtainPairSerializer
 
 User = get_user_model()
 
@@ -20,3 +22,29 @@ class CreateUserSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         return User.objects.create_user(**validated_data)
+
+
+class TokenObtainPairSerializer(BaseTokenObtainPairSerializer):
+    username_field = 'user'
+
+    def validate(self, attrs):
+        authenticate_kwargs = {
+            'username': attrs['user'],
+            'password': attrs['password'],
+            'raise_exception': True
+        }
+        try:
+            authenticate_kwargs['request'] = self.context['request']
+        except KeyError:
+            pass
+
+        try:
+            self.user = authenticate(**authenticate_kwargs)
+        except Exception as err:
+            raise err
+
+        refresh = self.get_token(self.user)
+        return {
+            'refresh': str(refresh),
+            'access': str(refresh.access_token)
+        }
