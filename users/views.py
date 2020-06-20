@@ -6,10 +6,14 @@ from rest_framework.permissions import AllowAny
 from rest_framework.viewsets import GenericViewSet
 from rest_framework_simplejwt.exceptions import TokenError
 from rest_framework_simplejwt.views import \
-    TokenObtainPairView as BaseTokenObtainPairView, \
+    TokenObtainPairView as BaseTokenObtainPairView
+from rest_framework_simplejwt.views import \
     TokenRefreshView as BaseTokenRefreshView
+from rest_framework_social_oauth2.views import \
+    ConvertTokenView as BaseConvertTokenView
 
 from . import responses, utils
+from .models import OAuthApplication
 from .serializers import CreateUserSerializer, TokenObtainPairSerializer
 
 User = get_user_model()
@@ -81,7 +85,6 @@ class TokenObtainPairView(BaseTokenObtainPairView):
         except PermissionDenied:
             return responses.USER_IS_BLOCKED
         except Exception as err:
-            print('Look: ', err)
             return responses.TOKEN_GENERATION_ERROR
 
         return responses.create_response(200000, serializer.validated_data)
@@ -100,3 +103,33 @@ class TokenRefreshView(BaseTokenRefreshView):
             return responses.TOKEN_GENERATION_ERROR
 
         return responses.create_response(200000, serializer.validated_data)
+
+
+class ConvertTokenView(BaseConvertTokenView):
+
+    def post(self, request, *args, **kwargs):
+        request.data['grant_type'] = 'convert_token'
+        client_id = request.data.get('client_id', '')
+
+        try:
+            app = OAuthApplication.objects.get(client_id=client_id)
+            request.data['backend'] = app.backend
+            super_response = super().post(request, *args, **kwargs)
+            if super_response.status_code != 200:
+                error = super_response.data.get('error', '')
+                if error == 'access_denied':
+                    return responses.INVALID_OAUTH_TOKEN
+                raise Exception
+            access_token = super_response.data.get('access_token', '')
+            refresh_token = super_response.data.get('refresh_token', '')
+            if access_token == '' or refresh_token == '':
+                raise Exception
+        except OAuthApplication.DoesNotExist:
+            return responses.OAUTH_APP_NOT_FOUND
+        except Exception as err:
+            return responses.TOKEN_GENERATION_ERROR
+
+        return responses.create_response(
+            200000,
+            {'access': access_token, 'refresh': refresh_token}
+        )
