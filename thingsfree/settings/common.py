@@ -91,6 +91,13 @@ AUTHENTICATION_BACKENDS = [
     'social_core.backends.facebook.FacebookOAuth2',
 ]
 
+OAUTH2_PROVIDER = {
+    'ACCESS_TOKEN_GENERATOR': 'users.utils.generate_access_token',
+    'REFRESH_TOKEN_GENERATOR': 'users.utils.generate_refresh_token',
+    'ACCESS_TOKEN_EXPIRE_SECONDS': 900,
+    'REFRESH_TOKEN_EXPIRE_SECONDS': 604800,
+}
+
 SOCIAL_AUTH_VK_OAUTH2_KEY = os.getenv('VK_APP_ID')
 SOCIAL_AUTH_VK_OAUTH2_SECRET = os.getenv('VK_APP_SECRET_KEY')
 SOCIAL_AUTH_ODNOKLASSNIKI_OAUTH2_KEY = os.getenv('ODNOKLASSNIKI_APP_ID')
