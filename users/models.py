@@ -3,6 +3,7 @@ import uuid
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.utils.translation import gettext_lazy as _
+from oauth2_provider.models import AbstractApplication
 from phonenumber_field.modelfields import PhoneNumberField
 
 from cities.models import City
@@ -69,3 +70,15 @@ class UserContact(models.Model):
     class Meta:
         verbose_name = _('User contact')
         verbose_name_plural = _('User contacts')
+
+
+class OAuthApplication(AbstractApplication):
+    logo = models.ImageField(_('logo'), upload_to='social_logos')
+    backend = models.CharField(_('backend'), max_length=200)
+
+    class Meta:
+        verbose_name = _('OAuth application')
+        verbose_name_plural = _('OAuth applications')
+
+    def __str__(self):
+        return self.name
