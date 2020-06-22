@@ -3,6 +3,8 @@ from rest_framework import serializers
 from rest_framework_simplejwt.serializers import \
     TokenObtainPairSerializer as BaseTokenObtainPairSerializer
 
+from .models import OAuthApplication
+
 User = get_user_model()
 
 
@@ -48,3 +50,18 @@ class TokenObtainPairSerializer(BaseTokenObtainPairSerializer):
             'refresh': str(refresh),
             'access': str(refresh.access_token)
         }
+
+
+class SocialProviderSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = OAuthApplication
+        fields = ('name', 'client_id', 'logo')
+
+    def to_representation(self, instance):
+        ret = super().to_representation(instance)
+        backend = instance.get_backend()
+        auth_params = backend.auth_extra_arguments()
+        ret['auth_url'] = backend.auth_url()
+        ret['response_type'] = auth_params.get('response_type', backend.RESPONSE_TYPE)
+        return ret

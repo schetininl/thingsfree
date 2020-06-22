@@ -1,5 +1,7 @@
 import uuid
 
+from social_django.utils import load_backend, load_strategy
+from django.conf import settings
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.utils.translation import gettext_lazy as _
@@ -82,3 +84,11 @@ class OAuthApplication(AbstractApplication):
 
     def __str__(self):
         return self.name
+
+    def get_backend(self):
+        strategy = load_strategy()
+        return load_backend(
+            strategy,
+            self.backend,
+            settings.SOCIAL_AUTH_LOGIN_REDIRECT_URL
+        )

@@ -22,3 +22,5 @@ SIMPLE_JWT = {
     'REFRESH_TOKEN_LIFETIME': timedelta(days=14),
     'ROTATE_REFRESH_TOKENS': True,
 }
+
+SOCIAL_AUTH_LOGIN_REDIRECT_URL = 'http://localhost:8000/login/'

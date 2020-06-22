@@ -2,6 +2,7 @@ from django.contrib.auth import get_user_model
 from phone_verify.serializers import PhoneSerializer, SMSVerificationSerializer
 from rest_framework.decorators import action
 from rest_framework.exceptions import AuthenticationFailed, PermissionDenied
+from rest_framework.generics import ListAPIView, GenericAPIView
 from rest_framework.permissions import AllowAny
 from rest_framework.viewsets import GenericViewSet
 from rest_framework_simplejwt.exceptions import TokenError
@@ -12,9 +13,8 @@ from rest_framework_simplejwt.views import \
 from rest_framework_social_oauth2.views import \
     ConvertTokenView as BaseConvertTokenView
 
-from . import responses, utils
+from . import responses, serializers, utils
 from .models import OAuthApplication
-from .serializers import CreateUserSerializer, TokenObtainPairSerializer
 
 User = get_user_model()
 
@@ -50,13 +50,13 @@ class PhoneVerificationViewSet(GenericViewSet):
         return responses.VALID_SECURITY_CODE
 
     @action(detail=False, methods=['POST'], permission_classes=[AllowAny],
-            serializer_class=CreateUserSerializer)
+            serializer_class=serializers.CreateUserSerializer)
     def signup(self, request):
         serializer = SMSVerificationSerializer(data=request.data)
         if not serializer.is_valid():
             return responses.INVALID_SECURITY_CODE
 
-        serializer = CreateUserSerializer(data=request.data)
+        serializer = serializers.CreateUserSerializer(data=request.data)
         if not serializer.is_valid():
             errors = ' '.join([
                 ' '.join(msg) for msg in serializer.errors.values()
@@ -71,7 +71,7 @@ class PhoneVerificationViewSet(GenericViewSet):
 
 
 class TokenObtainPairView(BaseTokenObtainPairView):
-    serializer_class = TokenObtainPairSerializer
+    serializer_class = serializers.TokenObtainPairSerializer
 
     def post(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
@@ -133,3 +133,14 @@ class ConvertTokenView(BaseConvertTokenView):
             200000,
             {'access': access_token, 'refresh': refresh_token}
         )
+
+
+class SocialProvidersListView(GenericAPIView):
+    permission_classes = [AllowAny]
+    queryset = OAuthApplication.objects.all()
+    serializer_class = serializers.SocialProviderSerializer
+
+    def get(self, request, *args, **kwargs):
+        queryset = self.get_queryset()
+        serializer = self.get_serializer(queryset, many=True)
+        return responses.create_response(200000, {'providers': serializer.data})

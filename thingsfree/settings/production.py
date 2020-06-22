@@ -28,3 +28,4 @@ SIMPLE_JWT = {
 }
 
 SOCIAL_AUTH_POSTGRES_JSONFIELD = True
+SOCIAL_AUTH_LOGIN_REDIRECT_URL = 'https://www.thingsfree.ru/login/'
