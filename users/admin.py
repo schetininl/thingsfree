@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 from django.utils.translation import gettext_lazy as _
-
+from social_django.models import Association, Nonce, UserSocialAuth
 from .models import TypeOfContact, User, UserContact, SocialMedia
 
 
@@ -32,3 +32,8 @@ class UserContactAdmin(admin.ModelAdmin):
 @admin.register(SocialMedia)
 class SocialMediaAdmin(admin.ModelAdmin):
     exclude = ('id',)
+
+
+admin.site.unregister(Association)
+admin.site.unregister(Nonce)
+admin.site.unregister(UserSocialAuth)
