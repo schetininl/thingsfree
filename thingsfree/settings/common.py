@@ -21,9 +21,7 @@ INSTALLED_APPS = [
     'phonenumber_field',
     'phone_verify',
     'rest_framework',
-    'oauth2_provider',
     'social_django',
-    'rest_framework_social_oauth2',
     'offers',
     'users',
     'api',
@@ -94,15 +92,6 @@ AUTHENTICATION_BACKENDS = [
     'social_core.backends.facebook.FacebookOAuth2',
 ]
 
-OAUTH2_PROVIDER = {
-    'ACCESS_TOKEN_GENERATOR': 'users.utils.generate_access_token',
-    'REFRESH_TOKEN_GENERATOR': 'users.utils.generate_refresh_token',
-    'ACCESS_TOKEN_EXPIRE_SECONDS': 900,
-    'REFRESH_TOKEN_EXPIRE_SECONDS': 604800,
-}
-
-OAUTH2_PROVIDER_APPLICATION_MODEL = 'users.OAuthApplication'
-
 SOCIAL_AUTH_VK_OAUTH2_KEY = os.getenv('VK_APP_ID')
 SOCIAL_AUTH_VK_OAUTH2_SECRET = os.getenv('VK_APP_SECRET_KEY')
 SOCIAL_AUTH_VK_OAUTH2_SCOPE = ['email']
@@ -112,17 +101,26 @@ SOCIAL_AUTH_VK_OAUTH2_AUTH_EXTRA_ARGUMENTS = {
 }
 
 SOCIAL_AUTH_ODNOKLASSNIKI_OAUTH2_KEY = os.getenv('ODNOKLASSNIKI_APP_ID')
+SOCIAL_AUTH_ODNOKLASSNIKI_OAUTH2_PUBLIC_NAME = os.getenv('ODNODLASSNIKI_APP_PUBLIC_KEY')
 SOCIAL_AUTH_ODNOKLASSNIKI_OAUTH2_SECRET = os.getenv('ODNOKLASSNIKI_APP_SECRET')
 SOCIAL_AUTH_ODNOKLASSNIKI_OAUTH2_SCOPE = ['GET_EMAIL']
+SOCIAL_AUTH_ODNOKLASSNIKI_OAUTH2_AUTH_EXTRA_ARGUMENTS = {
+    'response_type': 'token',
+}
 
 SOCIAL_AUTH_FACEBOOK_KEY = os.getenv('FACEBOOK_APP_ID')
 SOCIAL_AUTH_FACEBOOK_SECRET = os.getenv('FACEBOOK_APP_SECRET')
+SOCIAL_AUTH_FACEBOOK_SCOPE = ['email']
+SOCIAL_AUTH_FACEBOOK_AUTH_EXTRA_ARGUMENTS = {
+    'response_type': 'token',
+}
+SOCIAL_AUTH_FACEBOOK_PROFILE_EXTRA_PARAMS = {
+    'fields': 'id, name, first_name, last_name, email'
+}
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework_simplejwt.authentication.JWTAuthentication',
-        'oauth2_provider.contrib.rest_framework.OAuth2Authentication',
-        'rest_framework_social_oauth2.authentication.SocialAuthentication',
     ],
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.IsAuthenticated',

@@ -28,7 +28,7 @@ USER_NOT_FOUND = message(400005, _('User not found.'))
 WRONG_PASSWORD = message(400006, _('Wrong password.'))
 USER_IS_BLOCKED = message(400007, _('The user is blocked.'))
 INVALID_REFRESH_TOKEN = message(400008, _('Invalid refresh-token.'))
-OAUTH_APP_NOT_FOUND = message(400009, _('Application not found.'))
+INVALID_SOCIAL_PROVIDER = message(400009, _('Provider is not found.'))
 INVALID_OAUTH_TOKEN = message(400010, _('Invalid token.'))
 
 SMS_SENDING_ERROR = message(500001, _('Error in sending verification code.'))
@@ -37,4 +37,3 @@ TOKEN_GENERATION_ERROR = message(500003, _('Error in token generation.'))
 
 def invalid_registration_data(errors):
     return message(400004, errors)
-

@@ -1,22 +1,31 @@
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from phone_verify.serializers import PhoneSerializer, SMSVerificationSerializer
-from rest_framework.decorators import action
+from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.exceptions import AuthenticationFailed, PermissionDenied
-from rest_framework.generics import ListAPIView, GenericAPIView
+from rest_framework.generics import RetrieveUpdateAPIView
 from rest_framework.permissions import AllowAny
 from rest_framework.viewsets import GenericViewSet
 from rest_framework_simplejwt.exceptions import TokenError
+from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import \
     TokenObtainPairView as BaseTokenObtainPairView
 from rest_framework_simplejwt.views import \
     TokenRefreshView as BaseTokenRefreshView
-from rest_framework_social_oauth2.views import \
-    ConvertTokenView as BaseConvertTokenView
+from social_core import exceptions as social_exceptions
+from social_core.backends.utils import load_backends as load_social_backends
+from social_django import utils as social_utils
 
 from . import responses, serializers, utils
-from .models import OAuthApplication
 
 User = get_user_model()
+
+
+class MeUserView(RetrieveUpdateAPIView):
+    serializer_class = serializers.UserSerializer
+
+    def get_object(self):
+        return self.request.user
 
 
 class PhoneVerificationViewSet(GenericViewSet):
@@ -105,42 +114,51 @@ class TokenRefreshView(BaseTokenRefreshView):
         return responses.create_response(200000, serializer.validated_data)
 
 
-class ConvertTokenView(BaseConvertTokenView):
-
-    def post(self, request, *args, **kwargs):
-        request.data['grant_type'] = 'convert_token'
-        client_id = request.data.get('client_id', '')
-
-        try:
-            app = OAuthApplication.objects.get(client_id=client_id)
-            request.data['backend'] = app.backend
-            super_response = super().post(request, *args, **kwargs)
-            if super_response.status_code != 200:
-                error = super_response.data.get('error', '')
-                if error == 'access_denied':
-                    return responses.INVALID_OAUTH_TOKEN
-                raise Exception
-            access_token = super_response.data.get('access_token', '')
-            refresh_token = super_response.data.get('refresh_token', '')
-            if access_token == '' or refresh_token == '':
-                raise Exception
-        except OAuthApplication.DoesNotExist:
-            return responses.OAUTH_APP_NOT_FOUND
-        except Exception as err:
-            return responses.TOKEN_GENERATION_ERROR
-
-        return responses.create_response(
-            200000,
-            {'access': access_token, 'refresh': refresh_token}
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def get_social_providers(request):
+    backends = load_social_backends(settings.AUTHENTICATION_BACKENDS)
+    providers = []
+    strategy = social_utils.load_strategy(request)
+    for backend_name, backend_class in backends.items():
+        backend = backend_class(
+            strategy=strategy,
+            redirect_uri=settings.SOCIAL_AUTH_LOGIN_REDIRECT_URL
         )
+        providers.append({
+            'name': backend_name,
+            'auth_url': backend.auth_url()
+        })
+    return responses.create_response(200000, {'providers': providers})
 
 
-class SocialProvidersListView(GenericAPIView):
-    permission_classes = [AllowAny]
-    queryset = OAuthApplication.objects.all()
-    serializer_class = serializers.SocialProviderSerializer
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def convert_social_token(request):
+    provider = request.data.get('provider', '')
+    token = request.data.get('token', '')
+    strategy = social_utils.load_strategy(request)
+    try:
+        backend = social_utils.load_backend(
+            strategy=strategy,
+            name=provider,
+            redirect_uri=None
+        )
+    except social_exceptions.MissingBackend:
+        return responses.INVALID_SOCIAL_PROVIDER
 
-    def get(self, request, *args, **kwargs):
-        queryset = self.get_queryset()
-        serializer = self.get_serializer(queryset, many=True)
-        return responses.create_response(200000, {'providers': serializer.data})
+    user = backend.do_auth(token)
+    if user is None:
+        return responses.INVALID_OAUTH_TOKEN
+
+    if not user.is_active:
+        return responses.USER_IS_BLOCKED
+
+    try:
+        refresh = RefreshToken.for_user(user)
+        return responses.create_response(200000, {
+            'access': str(refresh.access_token),
+            'refresh': str(refresh)
+        })
+    except Exception:
+        return responses.TOKEN_GENERATION_ERROR

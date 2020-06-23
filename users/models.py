@@ -1,18 +1,14 @@
 import uuid
 
-from social_django.utils import load_backend, load_strategy
-from django.conf import settings
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.utils.translation import gettext_lazy as _
-from oauth2_provider.models import AbstractApplication
 from phonenumber_field.modelfields import PhoneNumberField
 
 from cities.models import City
 
 
 class User(AbstractUser):
-
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     phone_number = PhoneNumberField(
         _('phone'),
@@ -20,7 +16,8 @@ class User(AbstractUser):
         error_messages={
             'unique': _('A user with that phone already exists.')
         },
-        blank=True
+        blank=True,
+        null=True
     )
     avatar = models.CharField(
         _('photo'),
@@ -72,23 +69,3 @@ class UserContact(models.Model):
     class Meta:
         verbose_name = _('User contact')
         verbose_name_plural = _('User contacts')
-
-
-class OAuthApplication(AbstractApplication):
-    logo = models.ImageField(_('logo'), upload_to='social_logos')
-    backend = models.CharField(_('backend'), max_length=200)
-
-    class Meta:
-        verbose_name = _('OAuth application')
-        verbose_name_plural = _('OAuth applications')
-
-    def __str__(self):
-        return self.name
-
-    def get_backend(self):
-        strategy = load_strategy()
-        return load_backend(
-            strategy,
-            self.backend,
-            settings.SOCIAL_AUTH_LOGIN_REDIRECT_URL
-        )

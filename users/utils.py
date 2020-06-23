@@ -1,7 +1,6 @@
-from phone_verify.services import PhoneVerificationService, get_sms_backend
-from rest_framework_simplejwt.tokens import RefreshToken
-
 import logging
+
+from phone_verify.services import PhoneVerificationService, get_sms_backend
 
 logger = logging.getLogger(__name__)
 
@@ -23,13 +22,3 @@ def send_security_code(phone_number):
         raise exc
 
     return session_token
-
-
-def generate_access_token(request):
-    refresh = RefreshToken.for_user(request.user)
-    return str(refresh.access_token)
-
-
-def generate_refresh_token(request):
-    refresh = RefreshToken.for_user(request.user)
-    return str(refresh)

@@ -23,4 +23,4 @@ SIMPLE_JWT = {
     'ROTATE_REFRESH_TOKENS': True,
 }
 
-SOCIAL_AUTH_LOGIN_REDIRECT_URL = 'http://localhost:8000/login/'
+SOCIAL_AUTH_LOGIN_REDIRECT_URL = 'https://localhost/'
