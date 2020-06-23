@@ -17,6 +17,7 @@ from social_core.backends.utils import load_backends as load_social_backends
 from social_django import utils as social_utils
 
 from . import responses, serializers, utils
+from .models import SocialMedia
 
 User = get_user_model()
 
@@ -125,8 +126,18 @@ def get_social_providers(request):
             strategy=strategy,
             redirect_uri=settings.SOCIAL_AUTH_LOGIN_REDIRECT_URL
         )
+        try:
+            social_media = SocialMedia.objects.get(oauth_backend=backend_name)
+            title = social_media.name
+            logo = social_media.logo.url
+        except SocialMedia.DoesNotExist:
+            title = ''
+            logo = ''
+
         providers.append({
             'name': backend_name,
+            'title': title,
+            'logo': logo,
             'auth_url': backend.auth_url()
         })
     return responses.create_response(200000, {'providers': providers})

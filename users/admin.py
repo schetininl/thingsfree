@@ -2,7 +2,7 @@ from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 from django.utils.translation import gettext_lazy as _
 
-from .models import TypeOfContact, User, UserContact
+from .models import TypeOfContact, User, UserContact, SocialMedia
 
 
 @admin.register(User)
@@ -27,3 +27,8 @@ class TypeOfContactAdmin(admin.ModelAdmin):
 @admin.register(UserContact)
 class UserContactAdmin(admin.ModelAdmin):
     fields = ('user', 'type', 'text')
+
+
+@admin.register(SocialMedia)
+class SocialMediaAdmin(admin.ModelAdmin):
+    exclude = ('id',)
