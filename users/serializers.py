@@ -2,6 +2,8 @@ from django.contrib.auth import authenticate, get_user_model
 from rest_framework import serializers
 from rest_framework_simplejwt.serializers import \
     TokenObtainPairSerializer as BaseTokenObtainPairSerializer
+from rest_framework_simplejwt.settings import api_settings
+from rest_framework_simplejwt.tokens import RefreshToken
 
 User = get_user_model()
 
@@ -52,6 +54,33 @@ class TokenObtainPairSerializer(BaseTokenObtainPairSerializer):
 
         refresh = self.get_token(self.user)
         return {
-            'refresh': str(refresh),
-            'access': str(refresh.access_token)
+            'access': str(refresh.access_token),
+            'expires_in': refresh.access_token.get('exp', ''),
+            'refresh': str(refresh)
         }
+
+
+class TokenRefreshSerializer(serializers.Serializer):
+    refresh = serializers.CharField()
+
+    def validate(self, attrs):
+        refresh = RefreshToken(attrs['refresh'])
+
+        data = {
+            'access': str(refresh.access_token),
+            'expires_in': refresh.access_token.get('exp', '')
+        }
+
+        if api_settings.ROTATE_REFRESH_TOKENS:
+            if api_settings.BLACKLIST_AFTER_ROTATION:
+                try:
+                    refresh.blacklist()
+                except AttributeError:
+                    pass
+
+            refresh.set_jti()
+            refresh.set_exp()
+
+            data['refresh'] = str(refresh)
+
+        return data

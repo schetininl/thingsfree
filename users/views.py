@@ -101,6 +101,7 @@ class TokenObtainPairView(BaseTokenObtainPairView):
 
 
 class TokenRefreshView(BaseTokenRefreshView):
+    serializer_class = serializers.TokenRefreshSerializer
 
     def post(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
