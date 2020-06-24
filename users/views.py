@@ -31,8 +31,7 @@ class MeUserView(RetrieveUpdateAPIView):
 
 class PhoneVerificationViewSet(GenericViewSet):
 
-    @action(detail=False, methods=["POST"], permission_classes=[AllowAny],
-        serializer_class=PhoneSerializer)
+    @action(detail=False, methods=["POST"], permission_classes=[AllowAny])
     def register(self, request):
         serializer = PhoneSerializer(data=request.data)
         if not serializer.is_valid():
@@ -51,16 +50,14 @@ class PhoneVerificationViewSet(GenericViewSet):
         except Exception:
             return responses.SMS_SENDING_ERROR
 
-    @action(detail=False, methods=["POST"], permission_classes=[AllowAny],
-        serializer_class=SMSVerificationSerializer,)
+    @action(detail=False, methods=["POST"], permission_classes=[AllowAny])
     def verify(self, request):
         serializer = SMSVerificationSerializer(data=request.data)
         if not serializer.is_valid():
             return responses.INVALID_SECURITY_CODE
         return responses.VALID_SECURITY_CODE
 
-    @action(detail=False, methods=['POST'], permission_classes=[AllowAny],
-            serializer_class=serializers.CreateUserSerializer)
+    @action(detail=False, methods=['POST'], permission_classes=[AllowAny])
     def signup(self, request):
         serializer = SMSVerificationSerializer(data=request.data)
         if not serializer.is_valid():
@@ -78,6 +75,20 @@ class PhoneVerificationViewSet(GenericViewSet):
         except Exception:
             return responses.USER_CREATION_ERROR
         return responses.USER_CREATION_OK
+
+    @action(detail=False, methods=['POST'])
+    def bind(self, request):
+        serializer = SMSVerificationSerializer(data=request.data)
+        if not serializer.is_valid():
+            return responses.INVALID_SECURITY_CODE
+
+        user = request.user
+        user.phone_number = serializer.validated_data.get('phone_number', '')
+        try:
+            user.save()
+        except Exception:
+            return responses.USER_UPDATE_ERROR
+        return responses.USER_UPDATE_OK
 
 
 class TokenObtainPairView(BaseTokenObtainPairView):

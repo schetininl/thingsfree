@@ -20,6 +20,7 @@ def message(status, text):
 
 VALID_SECURITY_CODE = message(200000, _('Security code is valid.'))
 USER_CREATION_OK = message(201000, _('User account has been created.'))
+USER_UPDATE_OK = message(200000, _('User account has been updated.'))
 
 INVALID_PHONE_NUMBER = message(400001, _('Phone number is not valid.'))
 USED_PHONE_NUMBER = message(400002, _('A user with that phone already exists.'))
@@ -34,6 +35,7 @@ INVALID_OAUTH_TOKEN = message(400010, _('Invalid token.'))
 SMS_SENDING_ERROR = message(500001, _('Error in sending verification code.'))
 USER_CREATION_ERROR = message(500002, _('User account has not been created.'))
 TOKEN_GENERATION_ERROR = message(500003, _('Error in token generation.'))
+USER_UPDATE_ERROR = message(500004, _('User account has not been updated.'))
 
 def invalid_registration_data(errors):
     return message(400004, errors)
