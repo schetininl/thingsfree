@@ -1,3 +1,6 @@
+import random
+
+from django.conf import settings
 from phone_verify.services import get_sms_backend
 import pytest
 from rest_framework_simplejwt.tokens import RefreshToken
@@ -160,3 +163,109 @@ def signup_data_invalid_username(request, existent_user, valid_verification_data
         'username': request.param,
         'password': '123456'
     }
+
+
+@pytest.fixture
+def vk_provider():
+    """Имя провайдера для социальной сети ВКонтакте."""
+    return 'vk-oauth2'
+
+
+@pytest.fixture
+def ok_provider():
+    """Имя провайдера для социальной сети Одноклассники."""
+    return 'odnoklassniki-oauth2'
+
+
+@pytest.fixture
+def fb_provider():
+    """Имя провайдера для социальной сети Facebook."""
+    return 'facebook'
+
+
+@pytest.fixture
+def random_social_provider(vk_provider, ok_provider, fb_provider):
+    """Случайный провайдер социальной сети."""
+    return random.choice((vk_provider, ok_provider, fb_provider))
+
+
+@pytest.fixture(scope='class')
+def valid_oauth_token():
+    """Валидный OAuth токен, выданный социальной сетью"""
+    return ('EAAmWwEcZCvcUBAJgown6ZB1sWLmigvbbwZAGUVmxNuDXZAihfllBUo1he6Hq8ZBkZ'
+            'B5j3wfDd6HaxA6d23CIZCXhPjWZBR69IbBcXGeZAOD15zFfbutAquF7OAnROE3RfVg'
+            'e3RjhtZA2NYJRS4FWc5PvcmGxr2FYmaR7gGBtL3iU0YrOXZBpZAS2Y0oLZCQS4kzED'
+            'd6KVIGtaubcAY9z4NgySuW3G')
+
+
+@pytest.fixture(scope='class')
+def invalid_oauth_token():
+    """Невалидный OAuth токен, выданный социальной сетью"""
+    return ('vbbwZAGUVmxNuDXZAihfllBUo1he6Hq8ZBkZEAAmWwEcZCvcUBAJgown6ZB1sWLmig'
+            'BcXGeZAOD15zFfbutAquF7OAnROE3RfVgB5j3wfDd6HaxA6d23CIZCXhPjWZBR69Ib'
+            'maR7gGBtL3iU0YrOXZBpZAS2Y0oLZCQS4kzEDe3RjhtZA2NYJRS4FWc5PvcmGxr2FY'
+            'AY9z4NgySuW3Gd6KVIGtaubc')
+
+
+@pytest.fixture(scope='class')
+def social_user_data():
+    """Данные пользователей социальных сетей."""
+    return {
+        'vk-oauth2': {
+            'id': '123456789',
+            'first_name': 'Иван',
+            'last_name': 'Иванов',
+            'screen_name': 'id123456789',
+            'nickname': 'ivanushka'
+        },
+        'odnoklassniki-oauth2': {
+            'uid': '9876543210123',
+            'first_name': 'Фидель',
+            'last_name': 'Кастро',
+            'name': 'Фидель Кастро',
+            'email': 'cuba@mail.ru'
+        },
+        'facebook': {
+            'id': '145698742132545',
+            'first_name': 'Илья',
+            'last_name': 'Муромец',
+            'email': 'bogatyr@mail.ru'
+        }
+    }
+
+
+@pytest.fixture
+def mock_get_user_data(valid_oauth_token, social_user_data):
+    """
+    Функция-пустышка, возвращающая 'замоканные' ответы социальных сетей
+    на запросы о данных профиля пользователя.
+    """
+    def get_json(self, url, *args, **kwargs):
+        token = kwargs['params']['access_token']
+
+        if url.startswith('https://api.vk.com/'):
+            if token != valid_oauth_token:
+                return {
+                    'error': {
+                        'error_msg': 'Unknown error',
+                        'error_code': 1
+                    }
+                }
+            return {
+                'response': [social_user_data['vk-oauth2']]
+            }
+        elif url.startswith('https://api.ok.ru/'):
+            if token != valid_oauth_token:
+                return {
+                    'error_code': 103,
+                    'error_msg': 'Invalid session key',
+                    'error_data': None
+                }
+            return social_user_data['odnoklassniki-oauth2']
+        elif url.startswith('https://graph.facebook.com/'):
+            if token != valid_oauth_token:
+                return None
+            return social_user_data['facebook']
+        return None
+
+    return get_json
