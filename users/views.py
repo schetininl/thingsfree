@@ -159,8 +159,11 @@ def get_social_providers(request):
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def convert_social_token(request):
-    provider = request.data.get('provider', '')
-    token = request.data.get('token', '')
+    serializer = serializers.OAuthTokenSerializer(data=request.data)
+    serializer.is_valid(raise_exception=True)
+
+    provider = serializer.validated_data['provider']
+    token = serializer.validated_data['token']
     strategy = social_utils.load_strategy(request)
     try:
         backend = social_utils.load_backend(

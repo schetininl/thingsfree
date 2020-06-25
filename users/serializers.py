@@ -84,3 +84,8 @@ class TokenRefreshSerializer(serializers.Serializer):
             data['refresh'] = str(refresh)
 
         return data
+
+
+class OAuthTokenSerializer(serializers.Serializer):
+    provider = serializers.CharField(max_length=32)
+    token = serializers.CharField(max_length=4096)
