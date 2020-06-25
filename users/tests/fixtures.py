@@ -6,6 +6,8 @@ import pytest
 from rest_framework_simplejwt.tokens import RefreshToken
 from twilio.base.exceptions import TwilioRestException
 
+from users.models import SocialMedia
+
 
 @pytest.fixture
 def sms_send_method():
@@ -187,6 +189,51 @@ def fb_provider():
 def random_social_provider(vk_provider, ok_provider, fb_provider):
     """Случайный провайдер социальной сети."""
     return random.choice((vk_provider, ok_provider, fb_provider))
+
+
+@pytest.fixture(scope='class')
+def social_providers():
+    """Список социальных сетей."""
+    return [
+        {
+            'name': 'vk-oauth2',
+            'title': 'ВКонтакте',
+            'url': 'http://oauth.vk.com/authorize',
+            'app_id': '615687813254'
+        },
+        {
+            'name': 'odnoklassniki-oauth2',
+            'title': 'Одноклассники',
+            'url': 'https://connect.ok.ru/oauth/authorize',
+            'app_id': '21489731248'
+        },
+        {
+            'name': 'facebook',
+            'title': 'Facebook',
+            'url': 'https://www.facebook.com/v3.2/dialog/oauth',
+            'app_id': '91245786321147'
+        }
+    ]
+
+
+@pytest.fixture
+def social_providers_setup(social_providers, monkeypatch):
+    """
+    Создает объекты модели SocialMedia и устанавливает в настройках
+    ключи приложений.
+    """
+    for provider in social_providers:
+        social_media = SocialMedia(
+            name=provider['title'],
+            oauth_backend=provider['name'],
+            logo='abcdef'
+        )
+        social_media.save()
+
+        setting_key = 'SOCIAL_AUTH_{}_KEY'.format(
+            provider['name'].replace('-', '_').upper()
+        )
+        monkeypatch.setattr(settings, setting_key, provider['app_id'])
 
 
 @pytest.fixture(scope='class')

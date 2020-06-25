@@ -1,6 +1,8 @@
 from unittest import mock
 
 import pytest
+from django.conf import settings
+from django.test.client import Client
 from django.utils.translation import gettext_lazy as _
 from phone_verify.models import SMSVerification
 
@@ -226,3 +228,54 @@ class TestSignup:
         response_data = response.json()
         assert response_data.get('status') == 400004, \
             msg_pattern.format('статус бизнес-логики не равен 400004')
+
+
+
+@pytest.mark.usefixtures('social_providers_setup')
+@pytest.mark.django_db(transaction=True)
+class TestSocialProviders:
+    """Набор тестов для выборки социальных сетей."""
+
+    url = '/api/v1/social/providers/'
+    client = Client()
+
+    def test_list_of_providers(self, social_providers):
+        msg_pattern = f'При GET запросе {self.url} {{}}'
+        response = self.client.get(self.url)
+
+        assert response.status_code == 200, msg_pattern.format(
+            pytest.http_status_not_200)
+
+        response_data = response.json()
+        assert response_data.get('status', 0) == 200000, msg_pattern.format(
+            pytest.app_status_not_200000)
+
+        response_body = response_data.get('body', {})
+        assert 'providers' in response_body, msg_pattern.format(
+            'тело ответа не содержит список провайдеров')
+
+        recieved_providers = response_body.get('providers', [])
+        assert len(recieved_providers) == len(social_providers), \
+            msg_pattern.format('ответ содержит неверное количество провайдеров')
+
+        recieved_providers.sort(key=lambda x: x['name'])
+        social_providers.sort(key=lambda x: x['name'])
+
+        for i in range(len(social_providers)):
+            assert recieved_providers[i]['name'] == social_providers[i]['name'], \
+                msg_pattern.format('ответ содержит неверные данные')
+            assert recieved_providers[i]['title'] == social_providers[i]['title'], \
+                msg_pattern.format('ответ содержит неверные данные')
+
+            expected_url = social_providers[i]['url']
+            actual_url = recieved_providers[i]['auth_url']
+            assert actual_url.startswith(expected_url), \
+                msg_pattern.format('ответ содержит неверные url')
+
+            setting_key = 'SOCIAL_AUTH_{}_KEY'.format(
+                social_providers[i]['name'].replace('-', '_').upper())
+            assert getattr(settings, setting_key) in actual_url, \
+                msg_pattern.format('ответ содержит неверные url')
+
+            assert 'logo' in recieved_providers[i], msg_pattern.format(
+                'ответ не содержит логотипов социальных сетей')
