@@ -316,3 +316,12 @@ def mock_get_user_data(valid_oauth_token, social_user_data):
         return None
 
     return get_json
+
+
+@pytest.fixture
+def mock_generate_token():
+    """Функция-пустышка для генерации токена доступа, кидающая исключение."""
+    def generate_token(cls, user):
+        raise Exception
+
+    return generate_token

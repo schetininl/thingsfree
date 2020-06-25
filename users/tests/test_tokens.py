@@ -10,160 +10,166 @@ from social_django.models import UserSocialAuth
 User = get_user_model()
 
 
+@pytest.mark.django_db(transaction=True)
 class TestTokenObtain:
-    """Набор тестов для тестирования выдачи JWT-токенов."""
+    """Набор тестов для выдачи JWT-токенов."""
 
     url = '/api/v1/token/'
+    client = Client()
 
-    @pytest.mark.django_db(transaction=True)
+    def post(self, request_body):
+        response = self.client.post(self.url, data=request_body)
+        response_data = response.json()
+        response_body = response_data.get('body', {})
+        app_status = response_data.get('status', 0)
+
+        return response.status_code, app_status, response_body
+
     @pytest.mark.parametrize('user_field', ['username', 'email', 'phone_number'])
-    def test_successful_obtain(self, client, existent_user, default_password, user_field):
+    def test_successful_obtain(self, existent_user, default_password, user_field):
         msg_pattern = f'При POST запросе {self.url} с валидными данными {{}}'
-
-        request_body = {
+        http_status, app_status, response_body = self.post({
             'user': getattr(existent_user, user_field),
             'password': default_password
-        }
-        response = client.post(self.url, data=request_body)
+        })
+        assert http_status == 200, msg_pattern.format(
+            pytest.http_status_not_200)
+        assert app_status == 200000, msg_pattern.format(
+            pytest.app_status_not_200000)
 
-        assert response.status_code == 200, \
-            msg_pattern.format(pytest.http_status_not_200)
-
-        response_data = response.json()
-
-        assert response_data.get('status') == 200000, \
-            msg_pattern.format('статус бизнес-логики не равен 200000')
-
-        response_body = response_data.get('body')
         access_token = response_body.get('access', '')
         refresh_token = response_body.get('refresh', '')
-        assert access_token != '', \
-            msg_pattern.format('в теле ответа не содержится токен доступа')
-        assert refresh_token != '', \
-            msg_pattern.format('в теле ответа не содержится refresh-токен')
+        expires_in = response_body.get('expires_in', 0)
+        assert access_token != '', msg_pattern.format(
+            'в теле ответа не содержится токен доступа')
+        assert refresh_token != '', msg_pattern.format(
+            'в теле ответа не содержится refresh-токен')
+        assert expires_in != 0, msg_pattern.format(
+            'в теле ответа не содержится время жизни токена')
 
-    @pytest.mark.django_db(transaction=True)
+        try:
+            token = AccessToken(access_token)
+            user = User.objects.get(id=token['user_id'])
+        except Exception:
+            user = None
+        assert user is not None, msg_pattern.format(
+            'в теле ответа содержится невалидный токен')
+
     @pytest.mark.parametrize('user_field', ['username', 'email', 'phone_number'])
-    def test_nonexistent_user(self, client, nonexistent_user, default_password, user_field):
+    def test_nonexistent_user(self, nonexistent_user, default_password, user_field):
         msg_pattern = f'При POST запросе {self.url} с данными несуществующего' \
                       f' пльзователя {{}}'
-
-        request_body = {
+        http_status, app_status, response_body = self.post({
             'user': nonexistent_user[user_field],
             'password': default_password
-        }
-        response = client.post(self.url, data=request_body)
-        assert response.status_code == 400, \
-            msg_pattern.format(pytest.http_status_not_400)
+        })
 
-        response_data = response.json()
+        assert http_status == 400, msg_pattern.format(
+            pytest.http_status_not_400)
+        assert app_status == 400005, msg_pattern.format(
+            'статус бизнес-логики не равен 400005')
 
-        assert response_data.get('status') == 400005, \
-            msg_pattern.format('статус бизнес-логики не равен 400005')
-
-        response_body = response_data.get('body')
         actual_msg = response_body.get('message')
-        assert actual_msg == _('User not found.'), \
-            msg_pattern.format(pytest.wrong_msg)
+        assert actual_msg == _('User not found.'), msg_pattern.format(
+            pytest.wrong_msg)
 
-    @pytest.mark.django_db(transaction=True)
     @pytest.mark.parametrize('user_field', ['username', 'email', 'phone_number'])
-    def test_wrong_password(self, client, existent_user, default_password, user_field):
+    def test_wrong_password(self, existent_user, default_password, user_field):
         msg_pattern = f'При POST запросе {self.url} с неверным паролем {{}}'
-
-        request_body = {
+        http_status, app_status, response_body = self.post({
             'user': getattr(existent_user, user_field),
             'password': default_password + '1'
-        }
-        response = client.post(self.url, data=request_body)
+        })
+        assert http_status == 400, msg_pattern.format(
+            pytest.http_status_not_400)
+        assert app_status == 400006, msg_pattern.format(
+            'статус бизнес-логики не равен 400006')
 
-        assert response.status_code == 400, \
-            msg_pattern.format(pytest.http_status_not_400)
-
-        response_data = response.json()
-
-        assert response_data.get('status') == 400006, \
-            msg_pattern.format('статус бизнес-логики не равен 400006')
-
-        response_body = response_data.get('body')
         actual_msg = response_body.get('message')
-        assert actual_msg == _('Wrong password.'), \
-            msg_pattern.format(pytest.wrong_msg)
+        assert actual_msg == _('Wrong password.'), msg_pattern.format(
+            pytest.wrong_msg)
 
-    @pytest.mark.django_db(transaction=True)
     @pytest.mark.parametrize('user_field', ['username', 'email', 'phone_number'])
-    def test_blocked_user(self, client, blocked_user, default_password, user_field):
+    def test_blocked_user(self, blocked_user, default_password, user_field):
         msg_pattern = f'При POST запросе {self.url} с данными ' \
                       f'заблокированного пользователя {{}}'
-
-        request_body = {
+        http_status, app_status, response_body = self.post({
             'user': getattr(blocked_user, user_field),
             'password': default_password
-        }
-        response = client.post(self.url, data=request_body)
+        })
+        assert http_status == 400, msg_pattern.format(
+            pytest.http_status_not_400)
+        assert app_status == 400007, msg_pattern.format(
+            'статус бизнес-логики не равен 400007')
 
-        assert response.status_code == 400, \
-            msg_pattern.format(pytest.http_status_not_400)
-
-        response_data = response.json()
-
-        assert response_data.get('status') == 400007, \
-            msg_pattern.format('статус бизнес-логики не равен 400007')
-
-        response_body = response_data.get('body')
         actual_msg = response_body.get('message')
         assert actual_msg == _('The user is blocked.'), \
             msg_pattern.format(pytest.wrong_msg)
 
+    def test_token_generation_error(self, existent_user, default_password,
+                                    mock_generate_token, monkeypatch):
+        msg_pattern = f'При POST запросе {self.url}, приводящем к ошибке ' \
+                      f'генерации токена {{}}'
+        monkeypatch.setattr(RefreshToken, 'for_user', mock_generate_token)
 
+        http_status, app_status, response_body = self.post({
+            'user': existent_user.username,
+            'password': default_password
+        })
+        assert http_status == 500, msg_pattern.format(
+            pytest.http_status_not_500)
+        assert app_status == 500003, msg_pattern.format(
+            pytest.app_status_not_500003)
+
+
+@pytest.mark.django_db(transaction=True)
 class TestTokenRefresh:
-    """Набор тестов для тестирования обновления токена доступа."""
+    """Набор тестов для обновления токена доступа."""
 
     url = '/api/v1/token/refresh/'
+    client = Client()
 
-    @pytest.mark.django_db(transaction=True)
-    def test_successful_refresh(self, client, refresh_token):
+    def post(self, request_body):
+        response = self.client.post(self.url, data=request_body)
+        response_data = response.json()
+        response_body = response_data.get('body', {})
+        app_status = response_data.get('status', 0)
+
+        return response.status_code, app_status, response_body
+
+    def test_successful_refresh(self, refresh_token):
         msg_pattern = f'При POST запросе {self.url} с валидными данными {{}}'
-
-        request_body = {
+        http_status, app_status, response_body = self.post({
             'refresh': refresh_token
-        }
-        response = client.post(self.url, data=request_body)
+        })
+        assert http_status == 200, msg_pattern.format(
+            pytest.http_status_not_200)
+        assert app_status == 200000, msg_pattern.format(
+            pytest.app_status_not_200000)
 
-        assert response.status_code == 200, \
-            msg_pattern.format(pytest.http_status_not_200)
-
-        response_data = response.json()
-
-        assert response_data.get('status') == 200000, \
-            msg_pattern.format('статус бизнес-логики не равен 200000')
-
-        response_body = response_data.get('body')
         access_token = response_body.get('access', '')
-        assert access_token != '', \
-            msg_pattern.format('в теле ответа не содержится токен доступа')
+        refresh_token = response_body.get('refresh', '')
+        expires_in = response_body.get('expires_in', 0)
+        assert access_token != '', msg_pattern.format(
+            'в теле ответа не содержится токен доступа')
+        assert refresh_token != '', msg_pattern.format(
+            'в теле ответа не содержится refresh-токен')
+        assert expires_in != '', msg_pattern.format(
+            'в теле ответа не содержится время жизни токена')
 
-    @pytest.mark.django_db(transaction=True)
-    def test_invalid_refres_token(self, client, invalid_refresh_token):
+    def test_invalid_refres_token(self, invalid_refresh_token):
         msg_pattern = f'При POST запросе {self.url} с невалидными данными {{}}'
-
-        request_body = {
+        http_status, app_status, response_body = self.post({
             'refresh': invalid_refresh_token
-        }
-        response = client.post(self.url, data=request_body)
+        })
+        assert http_status == 400, msg_pattern.format(
+            pytest.http_status_not_400)
+        assert app_status == 400008, msg_pattern.format(
+            'статус бизнес-логики не равен 400008')
 
-        assert response.status_code == 400, \
-            msg_pattern.format(pytest.http_status_not_400)
-
-        response_data = response.json()
-
-        assert response_data.get('status') == 400008, \
-            msg_pattern.format('статус бизнес-логики не равен 400008')
-
-        response_body = response_data.get('body')
         actual_msg = response_body.get('message')
-        assert actual_msg == _('Invalid refresh-token.'), \
-            msg_pattern.format(pytest.wrong_msg)
+        assert actual_msg == _('Invalid refresh-token.'), msg_pattern.format(
+            pytest.wrong_msg)
 
 
 @pytest.mark.django_db(transaction=True)
@@ -297,14 +303,10 @@ class TestConvertSocialToken:
 
     def test_token_generation_error(self, random_social_provider,
                                     valid_oauth_token, mock_get_user_data,
-                                    monkeypatch):
+                                    mock_generate_token, monkeypatch):
         msg_pattern = f'При POST запросе {self.url}, приводящем к ошибке ' \
                       f'генерации токена {{}}'
         monkeypatch.setattr(BaseAuth, 'get_json', mock_get_user_data)
-
-        def mock_generate_token(cls, user):
-            raise Exception
-
         monkeypatch.setattr(RefreshToken, 'for_user', mock_generate_token)
 
         http_status, app_status, response_body = self.post({
