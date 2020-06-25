@@ -10,174 +10,150 @@ from phone_verify.models import SMSVerification
 User = get_user_model()
 
 
+@pytest.mark.django_db(transaction=True)
 class TestSecurityCodeSending:
-    """Набор тестов для проверки отправки СМС с кодом подтверждения."""
+    """Набор тестов для отправки СМС с кодом подтверждения."""
 
     url = '/api/v1/phone/register/'
+    client = Client()
+
+    def post(self, request_body):
+        response = self.client.post(self.url, data=request_body)
+        response_data = response.json()
+        response_body = response_data.get('body', {})
+        app_status = response_data.get('status', 0)
+
+        return response.status_code, app_status, response_body
 
     @pytest.fixture(autouse=True)
     def methods_for_mock(self, sms_send_method):
         self.sms_send_method = sms_send_method
 
-    @pytest.mark.django_db(transaction=True)
-    def test_successful_sending(self, client, valid_phone_number):
+    def test_successful_sending(self, valid_phone_number):
         msg_pattern = f'При POST запросе {self.url} с валидными данными {{}}'
 
         with mock.patch(self.sms_send_method) as sender_mock:
-            request_body = {
+            http_status, app_status, response_body = self.post({
                 'phone_number': valid_phone_number
-            }
-            response = client.post(self.url, data=request_body)
+            })
+            assert http_status == 200, msg_pattern.format(
+                pytest.http_status_not_200)
+            assert app_status == 200000, msg_pattern.format(
+                pytest.app_status_not_200000)
 
-            assert response.status_code == 200, \
-                msg_pattern.format(pytest.http_status_not_200)
-
-            response_data = response.json()
-
-            assert response_data.get('status') == 200000, \
-                msg_pattern.format('статус бизнес-логики не равен 200000')
-
-            response_body = response_data.get('body')
             queryset = SMSVerification.objects.filter(
                 phone_number=valid_phone_number
             )
-
-            assert queryset.exists(), \
-                msg_pattern.format('не был сгенерирован код подтверждения')
+            assert queryset.exists(), msg_pattern.format(
+                'не был сгенерирован код подтверждения')
 
             verification = queryset.first()
             actual_session_token = response_body.get('session_token')
-
             assert actual_session_token == verification.session_token, \
                 msg_pattern.format('ответ содержит неверный токен сессии')
 
-            assert sender_mock.called, \
-                msg_pattern.format('не происходит отправка СМС сообщения')
+            assert sender_mock.called, msg_pattern.format(
+                'не происходит отправка СМС сообщения')
 
             actual_number, sent_message = sender_mock.call_args.args
-
-            assert actual_number == valid_phone_number, \
-                msg_pattern.format('СМС отправлено на неверный номер')
-
+            assert actual_number == valid_phone_number, msg_pattern.format(
+                'СМС отправлено на неверный номер')
             assert verification.security_code in sent_message, \
                 msg_pattern.format('СМС не содержит код подтверждения')
 
-    @pytest.mark.django_db(transaction=True)
-    def test_invalid_phone_number(self, client, invalid_phone_number):
+    def test_invalid_phone_number(self, invalid_phone_number):
         msg_pattern = f'При POST запросе {self.url} с невалидными данными {{}}'
 
         with mock.patch(self.sms_send_method) as sender_mock:
-            request_body = {
+            http_status, app_status, response_body = self.post({
                 'phone_number': invalid_phone_number
-            }
-            response = client.post(self.url, data=request_body)
+            })
+            assert http_status == 400, msg_pattern.format(
+                pytest.http_status_not_400)
+            assert app_status == 400001, msg_pattern.format(
+                'статус бизнес-логики не равен 400001')
 
-            assert response.status_code == 400, \
-                msg_pattern.format(pytest.http_status_not_400)
+            assert not sender_mock.called, msg_pattern.format(
+                'отправляется СМС')
 
-            response_data = response.json()
-
-            assert response_data.get('status') == 400001, \
-                msg_pattern.format('статус бизнес-логики не равен 400001')
-
-            assert not sender_mock.called, \
-                msg_pattern.format('отправляется СМС')
-
-            response_body = response_data.get('body')
             actual_msg = response_body.get('message')
             assert actual_msg == _('Phone number is not valid.'), \
                 msg_pattern.format(pytest.wrong_msg)
 
-    @pytest.mark.django_db(transaction=True)
-    def test_used_phone_number(self, client, existent_user):
+    def test_used_phone_number(self, existent_user):
         msg_pattern = f'При POST запросе {self.url} телефоном, который ' \
                       f'уже используется другим пользователем {{}}'
 
         with mock.patch(self.sms_send_method) as sender_mock:
-            request_body = {
+            http_status, app_status, response_body = self.post({
                 'phone_number': existent_user.phone_number
-            }
-            response = client.post(self.url, data=request_body)
+            })
+            assert http_status == 400, msg_pattern.format(
+                pytest.http_status_not_400)
+            assert app_status == 400002, msg_pattern.format(
+                'статус бизнес-логики не равен 400002')
 
-            assert response.status_code == 400, \
-                msg_pattern.format(pytest.http_status_not_400)
+            assert not sender_mock.called, msg_pattern.format(
+                'отправляется СМС')
 
-            response_data = response.json()
-
-            assert response_data.get('status') == 400002, \
-                msg_pattern.format('статус бизнес-логики не равен 400002')
-
-            assert not sender_mock.called, \
-                msg_pattern.format('отправляется СМС')
-
-            response_body = response_data.get('body')
             actual_msg = response_body.get('message')
             assert actual_msg == _('A user with that phone already exists.'), \
                 msg_pattern.format(pytest.wrong_msg)
 
-    @pytest.mark.django_db(transaction=True)
-    def test_sms_sending_error(self, client, sms_sending_exception,
-                               valid_phone_number):
+    def test_sms_sending_error(self, sms_sending_exception, valid_phone_number):
         msg_pattern = f'При POST запросе {self.url} с неработающим бэкэндом ' \
                       f'отправки СМС {{}}'
 
         with mock.patch(self.sms_send_method, side_effect=sms_sending_exception):
-            request_body = {
+            http_status, app_status, response_body = self.post({
                 'phone_number': valid_phone_number
-            }
-            response = client.post(self.url, data=request_body)
+            })
+            assert http_status == 500, msg_pattern.format(
+                pytest.http_status_not_500)
+            assert app_status == 500001, msg_pattern.format(
+                'статус бизнес-логики не равен 500001')
 
-            assert response.status_code == 500, \
-                msg_pattern.format(pytest.http_status_not_500)
-
-            response_data = response.json()
-
-            assert response_data.get('status') == 500001, \
-                msg_pattern.format('статус бизнес-логики не равен 500001')
-
-            response_body = response_data.get('body')
             actual_msg = response_body.get('message')
             assert actual_msg == _('Error in sending verification code.'), \
                 msg_pattern.format(pytest.wrong_msg)
 
 
+@pytest.mark.django_db(transaction=True)
 class TestSecurityCodeVerification:
     """Набор тестов для проверки кода подтверждения из СМС."""
 
     url = '/api/v1/phone/verify/'
+    client = Client()
 
-    @pytest.mark.django_db(transaction=True)
-    def test_valid_security_code(self, client, valid_verification_data):
+    def post(self, request_body):
+        response = self.client.post(self.url, data=request_body)
+        response_data = response.json()
+        response_body = response_data.get('body', {})
+        app_status = response_data.get('status', 0)
+
+        return response.status_code, app_status, response_body
+
+    def test_valid_security_code(self, valid_verification_data):
         msg_pattern = f'При POST запросе {self.url} с верным кодом ' \
                       f'подтверждения {{}}'
-        response = client.post(self.url, data=valid_verification_data)
-        assert response.status_code == 200, \
-            msg_pattern.format(pytest.http_status_not_200)
-
-        response_data = response.json()
-        assert response_data.get('status') == 200000, \
-            msg_pattern.format('статус бизнес-логики не равен 200000')
-
-        response_body = response_data.get('body')
-        actual_msg = response_body.get('message')
-        assert actual_msg == _('Security code is valid.'), \
+        http_status, app_status, response_body = self.post(valid_verification_data)
+        assert http_status == 200, msg_pattern.format(
+            pytest.http_status_not_200)
+        assert app_status == 200000, msg_pattern.format(
+            pytest.app_status_not_200000)
+        assert response_body.get('message') == _('Security code is valid.'), \
             msg_pattern.format(pytest.wrong_msg)
 
-    @pytest.mark.django_db(transaction=True)
     def test_invalid_verification_data(self, client, invalid_verification_data):
         msg_pattern = f'При POST запросе {self.url} с неверным кодом ' \
                       f'подтверждения {{}}'
-        response = client.post(self.url, data=invalid_verification_data)
-        assert response.status_code == 400, \
-            msg_pattern.format(pytest.http_status_not_400)
-
-        response_data = response.json()
-        assert response_data.get('status') == 400003, \
-            msg_pattern.format('статус бизнес-логики не равен 400003')
-
-        response_body = response_data.get('body')
-        actual_msg = response_body.get('message')
-        assert actual_msg == _('Security code is not valid.'), \
+        http_status, app_status, response_body = self.post(
+            invalid_verification_data)
+        assert http_status == 400, msg_pattern.format(
+            pytest.http_status_not_400)
+        assert app_status == 400003, msg_pattern.format(
+            'статус бизнес-логики не равен 400003')
+        assert response_body.get('message') == _('Security code is not valid.'), \
             msg_pattern.format(pytest.wrong_msg)
 
 
@@ -264,10 +240,11 @@ class TestSignup:
         assert response_body.get('message') == _('User account has not been created.'), \
             msg_pattern.format(pytest.wrong_msg)
 
+
 @pytest.mark.usefixtures('social_providers_setup')
 @pytest.mark.django_db(transaction=True)
 class TestSocialProviders:
-    """Набор тестов для выборки социальных сетей."""
+    """Набор тестов для выборки социальных сетей, доступных для авторизации."""
 
     url = '/api/v1/social/providers/'
     client = Client()
