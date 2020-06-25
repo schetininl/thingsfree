@@ -1,5 +1,6 @@
 from django.conf import settings
 from django.contrib.auth import get_user_model
+from django.db.utils import DatabaseError
 from phone_verify.serializers import PhoneSerializer, SMSVerificationSerializer
 from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.exceptions import AuthenticationFailed, PermissionDenied
@@ -170,8 +171,13 @@ def convert_social_token(request):
     except social_exceptions.MissingBackend:
         return responses.INVALID_SOCIAL_PROVIDER
 
-    user = backend.do_auth(token)
-    if user is None:
+    user = None
+
+    try:
+        user = backend.do_auth(token)
+    except DatabaseError:
+        return responses.USER_CREATION_ERROR
+    except Exception as err:
         return responses.INVALID_OAUTH_TOKEN
 
     if not user.is_active:
@@ -181,6 +187,7 @@ def convert_social_token(request):
         refresh = RefreshToken.for_user(user)
         return responses.create_response(200000, {
             'access': str(refresh.access_token),
+            'expires_in': refresh.access_token.get('exp', ''),
             'refresh': str(refresh)
         })
     except Exception:
