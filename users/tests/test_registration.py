@@ -2,9 +2,12 @@ from unittest import mock
 
 import pytest
 from django.conf import settings
+from django.contrib.auth import get_user_model
 from django.test.client import Client
 from django.utils.translation import gettext_lazy as _
 from phone_verify.models import SMSVerification
+
+User = get_user_model()
 
 
 class TestSecurityCodeSending:
@@ -178,58 +181,88 @@ class TestSecurityCodeVerification:
             msg_pattern.format(pytest.wrong_msg)
 
 
+@pytest.mark.django_db(transaction=True)
 class TestSignup:
-    """Набор тестов для проверки регистрации нового аккаунта."""
+    """Набор тестов для регистрации нового аккаунта."""
     
     url = '/api/v1/phone/signup/'
+    client = Client()
 
-    @pytest.mark.django_db(transaction=True)
-    def test_successful_signup(self, client, valid_signup_data):
-        msg_pattern = f'При POST запросе {self.url} с корректными данными {{}}'
-
-        response = client.post(self.url, data=valid_signup_data)
-        assert response.status_code == 201, \
-            msg_pattern.format(pytest.http_status_not_201)
-
+    def post(self, request_body):
+        response = self.client.post(self.url, data=request_body)
         response_data = response.json()
-        assert response_data.get('status') == 201000, \
-            msg_pattern.format('статус бизнес-логики не равен 201000')
+        response_body = response_data.get('body', {})
+        app_status = response_data.get('status', 0)
 
-        response_body = response_data.get('body')
-        actual_msg = response_body.get('message')
-        assert actual_msg == _('User account has been created.'), \
+        return response.status_code, app_status, response_body
+
+    def test_successful_signup(self, valid_signup_data):
+        msg_pattern = f'При POST запросе {self.url} с корректными данными {{}}'
+        http_status, app_status, response_body = self.post(valid_signup_data)
+
+        assert http_status == 201, msg_pattern.format(
+            pytest.http_status_not_201)
+        assert app_status == 201000, msg_pattern.format(
+            pytest.app_status_not_201000)
+
+        assert response_body.get('message') == _('User account has been created.'), \
             msg_pattern.format(pytest.wrong_msg)
 
-    @pytest.mark.django_db(transaction=True)
-    def test_invalid_verification_data(self, client,
-                                       signup_data_invalid_verification):
+        try:
+            new_user = User.objects.get(username=valid_signup_data['username'])
+        except User.DoesNotExist:
+            new_user = None
+
+        assert new_user is not None, msg_pattern.format(
+            'в базе данных не создан пользователь')
+
+    def test_invalid_verification_data(self, signup_data_invalid_verification):
         msg_pattern = f'При POST запросе {self.url} с неверным кодом ' \
                       f'подтверждения {{}}'
-        response = client.post(self.url, data=signup_data_invalid_verification)
-        assert response.status_code == 400, \
-            msg_pattern.format(pytest.http_status_not_400)
+        http_status, app_status, response_body = self.post(
+            signup_data_invalid_verification)
 
-        response_data = response.json()
-        assert response_data.get('status') == 400003, \
-            msg_pattern.format('статус бизнес-логики не равен 400003')
+        assert http_status == 400, msg_pattern.format(
+            pytest.http_status_not_400)
+        assert app_status == 400003, msg_pattern.format(
+            'статус бизнес-логики не равен 400003')
 
-        response_body = response_data.get('body')
-        actual_msg = response_body.get('message')
-        assert actual_msg == _('Security code is not valid.'), \
+        assert response_body.get('message') == _('Security code is not valid.'), \
             msg_pattern.format(pytest.wrong_msg)
 
-    @pytest.mark.django_db(transaction=True)
-    def test_invalid_registration_data(self, client, signup_data_invalid_username):
+        assert not User.objects.all().exists(), msg_pattern.format(
+            'в базе данных создан пользователь')
+
+    def test_invalid_registration_data(self, signup_data_invalid_username):
         msg_pattern = f'При POST запросе {self.url} с некорректным username {{}}'
-        response = client.post(self.url, data=signup_data_invalid_username)
-        assert response.status_code == 400, \
-            msg_pattern.format(pytest.http_status_not_400)
+        count_of_users_before = User.objects.all().count()
+        http_status, app_status, response_body = self.post(
+            signup_data_invalid_username)
 
-        response_data = response.json()
-        assert response_data.get('status') == 400004, \
-            msg_pattern.format('статус бизнес-логики не равен 400004')
+        assert http_status == 400, msg_pattern.format(
+            pytest.http_status_not_400)
+        assert app_status == 400004, msg_pattern.format(
+            'статус бизнес-логики не равен 400004')
 
+        assert User.objects.all().count() == count_of_users_before, \
+            msg_pattern.format('в базе данных создан пользователь')
 
+    def test_server_error(self, valid_signup_data, monkeypatch):
+        msg_pattern = f'При POST запросе {self.url}, приводящем к внутренней ' \
+                      f'ошибке сервера {{}}'
+
+        def mock_user_create(*args, **kwargs):
+            raise Exception
+        monkeypatch.setattr(User.objects, 'create_user', mock_user_create)
+        http_status, app_status, response_body = self.post(valid_signup_data)
+
+        assert http_status == 500, msg_pattern.format(
+            pytest.http_status_not_500)
+        assert app_status == 500002, msg_pattern.format(
+            'статус бизнес-логики не равен 500002')
+
+        assert response_body.get('message') == _('User account has not been created.'), \
+            msg_pattern.format(pytest.wrong_msg)
 
 @pytest.mark.usefixtures('social_providers_setup')
 @pytest.mark.django_db(transaction=True)
