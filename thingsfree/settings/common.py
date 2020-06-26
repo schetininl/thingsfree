@@ -96,7 +96,6 @@ SOCIAL_AUTH_VK_OAUTH2_KEY = os.getenv('VK_APP_ID')
 SOCIAL_AUTH_VK_OAUTH2_SECRET = os.getenv('VK_APP_SECRET_KEY')
 SOCIAL_AUTH_VK_OAUTH2_SCOPE = ['email']
 SOCIAL_AUTH_VK_OAUTH2_AUTH_EXTRA_ARGUMENTS = {
-    'v': '5.92',
     'response_type': 'token',
 }
 
@@ -125,6 +124,7 @@ REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.IsAuthenticated',
     ],
+    'EXCEPTION_HANDLER': 'api.views.exception_handler',
 }
 
 PHONE_VERIFICATION = {
