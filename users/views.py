@@ -4,7 +4,6 @@ from django.db.utils import DatabaseError
 from phone_verify.serializers import PhoneSerializer, SMSVerificationSerializer
 from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.exceptions import AuthenticationFailed, PermissionDenied
-from rest_framework.generics import RetrieveUpdateAPIView
 from rest_framework.permissions import AllowAny
 from rest_framework.viewsets import GenericViewSet
 from rest_framework_simplejwt.exceptions import TokenError
@@ -21,13 +20,6 @@ from . import responses, serializers, utils
 from .models import SocialMedia
 
 User = get_user_model()
-
-
-class MeUserView(RetrieveUpdateAPIView):
-    serializer_class = serializers.UserSerializer
-
-    def get_object(self):
-        return self.request.user
 
 
 class PhoneVerificationViewSet(GenericViewSet):

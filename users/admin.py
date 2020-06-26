@@ -18,6 +18,9 @@ class CustomUserAdmin(UserAdmin):
         (_('Important dates'), {'fields': ('last_login', 'date_joined')}),
     )
 
+    list_display = ('username', 'email', 'phone_number', 'first_name',
+                    'last_name', 'is_staff')
+
 
 @admin.register(TypeOfContact)
 class TypeOfContactAdmin(admin.ModelAdmin):

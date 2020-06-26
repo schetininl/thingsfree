@@ -12,5 +12,4 @@ urlpatterns = [
     path('token/refresh/', views.TokenRefreshView.as_view()),
     path('social/providers/', views.get_social_providers),
     path('social/convert_token/', views.convert_social_token),
-    path('users/me/', views.MeUserView.as_view()),
 ]
