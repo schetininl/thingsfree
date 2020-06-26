@@ -7,7 +7,15 @@ pytest_plugins = [
 
 def pytest_configure():
     pytest.wrong_msg = 'ответ содержит неверное сообщение'
-    pytest.http_status_not_200 = 'HTTP статус ответа не равен 200'
-    pytest.http_status_not_201 = 'HTTP статус ответа не равен 201'
-    pytest.http_status_not_400 = 'HTTP статус ответа не равен 400'
-    pytest.http_status_not_500 = 'HTTP статус ответа не равен 500'
+    for code in (200, 201, 400, 401, 500):
+        setattr(
+            pytest,
+            f'http_status_not_{code}',
+            f'HTTP статус ответа не равен {code}'
+        )
+    for code in (200000, 201000):
+        setattr(
+            pytest,
+            f'app_status_not_{code}',
+            f'статус бизнес-логики не равен {code}'
+        )
