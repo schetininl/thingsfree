@@ -98,7 +98,7 @@ class TokenObtainPairView(BaseTokenObtainPairView):
             return responses.WRONG_PASSWORD
         except PermissionDenied:
             return responses.USER_IS_BLOCKED
-        except Exception as err:
+        except Exception:
             return responses.TOKEN_GENERATION_ERROR
 
         return responses.create_response(200000, serializer.validated_data)
@@ -172,7 +172,7 @@ def convert_social_token(request):
         user = backend.do_auth(token)
     except DatabaseError:
         return responses.USER_CREATION_ERROR
-    except Exception as err:
+    except Exception:
         return responses.INVALID_OAUTH_TOKEN
 
     if not user.is_active:

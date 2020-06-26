@@ -1,3 +1,5 @@
+import logging
+
 from django.contrib.auth import authenticate, get_user_model
 from rest_framework import serializers
 from rest_framework_simplejwt.serializers import \
@@ -5,6 +7,7 @@ from rest_framework_simplejwt.serializers import \
 from rest_framework_simplejwt.settings import api_settings
 from rest_framework_simplejwt.tokens import RefreshToken
 
+logger = logging.getLogger(__name__)
 User = get_user_model()
 
 
@@ -43,6 +46,7 @@ class TokenObtainPairSerializer(BaseTokenObtainPairSerializer):
         try:
             self.user = authenticate(**authenticate_kwargs)
         except Exception as err:
+            logger.error(f'Error in user authentication: {err}')
             raise err
 
         refresh = self.get_token(self.user)

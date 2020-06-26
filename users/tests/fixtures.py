@@ -334,7 +334,7 @@ def mock_generate_token():
     Функция-пустышка для эмуляции исключения во время генерации токена доступа.
     """
     def generate_token(cls, user):
-        raise Exception
+        raise SystemError
 
     return generate_token
 

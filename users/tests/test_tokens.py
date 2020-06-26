@@ -1,6 +1,5 @@
 import pytest
 from django.contrib.auth import get_user_model
-from django.db.utils import IntegrityError
 from django.test.client import Client
 from django.utils.translation import gettext_lazy as _
 from rest_framework_simplejwt.tokens import AccessToken, RefreshToken
@@ -33,19 +32,19 @@ class TestTokenObtain:
             'password': default_password
         })
         assert http_status == 200, msg_pattern.format(
-            pytest.http_status_not_200)
+            pytest.msg['wrong_http_status'])
         assert app_status == 200000, msg_pattern.format(
-            pytest.app_status_not_200000)
+            pytest.msg['wrong_app_status'])
 
         access_token = response_body.get('access', '')
         refresh_token = response_body.get('refresh', '')
         expires_in = response_body.get('expires_in', 0)
         assert access_token != '', msg_pattern.format(
-            'в теле ответа не содержится токен доступа')
+            pytest.msg['no_token'])
         assert refresh_token != '', msg_pattern.format(
-            'в теле ответа не содержится refresh-токен')
+            pytest.msg['no_refresh_token'])
         assert expires_in != 0, msg_pattern.format(
-            'в теле ответа не содержится время жизни токена')
+            pytest.msg['no_token_lifetime'])
 
         try:
             token = AccessToken(access_token)
@@ -65,13 +64,13 @@ class TestTokenObtain:
         })
 
         assert http_status == 400, msg_pattern.format(
-            pytest.http_status_not_400)
+            pytest.msg['wrong_http_status'])
         assert app_status == 400005, msg_pattern.format(
-            'статус бизнес-логики не равен 400005')
+            pytest.msg['wrong_app_status'])
 
         actual_msg = response_body.get('message')
         assert actual_msg == _('User not found.'), msg_pattern.format(
-            pytest.wrong_msg)
+            pytest.msg['wrong_message'])
 
     @pytest.mark.parametrize('user_field', ['username', 'email', 'phone_number'])
     def test_wrong_password(self, existent_user, default_password, user_field):
@@ -81,13 +80,13 @@ class TestTokenObtain:
             'password': default_password + '1'
         })
         assert http_status == 400, msg_pattern.format(
-            pytest.http_status_not_400)
+            pytest.msg['wrong_http_status'])
         assert app_status == 400006, msg_pattern.format(
-            'статус бизнес-логики не равен 400006')
+            pytest.msg['wrong_app_status'])
 
         actual_msg = response_body.get('message')
         assert actual_msg == _('Wrong password.'), msg_pattern.format(
-            pytest.wrong_msg)
+            pytest.msg['wrong_message'])
 
     @pytest.mark.parametrize('user_field', ['username', 'email', 'phone_number'])
     def test_blocked_user(self, blocked_user, default_password, user_field):
@@ -98,13 +97,13 @@ class TestTokenObtain:
             'password': default_password
         })
         assert http_status == 400, msg_pattern.format(
-            pytest.http_status_not_400)
+            pytest.msg['wrong_http_status'])
         assert app_status == 400007, msg_pattern.format(
-            'статус бизнес-логики не равен 400007')
+            pytest.msg['wrong_app_status'])
 
         actual_msg = response_body.get('message')
         assert actual_msg == _('The user is blocked.'), \
-            msg_pattern.format(pytest.wrong_msg)
+            msg_pattern.format(pytest.msg['wrong_message'])
 
     def test_token_generation_error(self, existent_user, default_password,
                                     mock_generate_token, monkeypatch):
@@ -117,9 +116,9 @@ class TestTokenObtain:
             'password': default_password
         })
         assert http_status == 500, msg_pattern.format(
-            pytest.http_status_not_500)
+            pytest.msg['wrong_http_status'])
         assert app_status == 500003, msg_pattern.format(
-            pytest.app_status_not_500003)
+            pytest.msg['wrong_app_status'])
 
 
 @pytest.mark.django_db(transaction=True)
@@ -143,19 +142,19 @@ class TestTokenRefresh:
             'refresh': refresh_token
         })
         assert http_status == 200, msg_pattern.format(
-            pytest.http_status_not_200)
+            pytest.msg['wrong_http_status'])
         assert app_status == 200000, msg_pattern.format(
-            pytest.app_status_not_200000)
+            pytest.msg['wrong_app_status'])
 
         access_token = response_body.get('access', '')
         refresh_token = response_body.get('refresh', '')
         expires_in = response_body.get('expires_in', 0)
         assert access_token != '', msg_pattern.format(
-            'в теле ответа не содержится токен доступа')
+            pytest.msg['no_token'])
         assert refresh_token != '', msg_pattern.format(
-            'в теле ответа не содержится refresh-токен')
+            pytest.msg['no_refresh_token'])
         assert expires_in != '', msg_pattern.format(
-            'в теле ответа не содержится время жизни токена')
+            pytest.msg['no_token_lifetime'])
 
     def test_invalid_refres_token(self, invalid_refresh_token):
         msg_pattern = f'При POST запросе {self.url} с невалидными данными {{}}'
@@ -163,13 +162,13 @@ class TestTokenRefresh:
             'refresh': invalid_refresh_token
         })
         assert http_status == 400, msg_pattern.format(
-            pytest.http_status_not_400)
+            pytest.msg['wrong_http_status'])
         assert app_status == 400008, msg_pattern.format(
-            'статус бизнес-логики не равен 400008')
+            pytest.msg['wrong_app_status'])
 
         actual_msg = response_body.get('message')
         assert actual_msg == _('Invalid refresh-token.'), msg_pattern.format(
-            pytest.wrong_msg)
+            pytest.msg['wrong_message'])
 
 
 @pytest.mark.django_db(transaction=True)
@@ -200,16 +199,16 @@ class TestConvertSocialToken:
         })
 
         assert http_status == 200, msg_pattern.format(
-            pytest.http_status_not_200)
+            pytest.msg['wrong_http_status'])
         assert app_status == 200000, msg_pattern.format(
-            pytest.app_status_not_200000)
+            pytest.msg['wrong_app_status'])
 
         assert 'access' in response_body, msg_pattern.format(
-            'в теле ответа не содержится токен доступа')
+            pytest.msg['no_token'])
         assert 'expires_in' in response_body, msg_pattern.format(
-            'в теле ответа не содержится время жизни токена')
+            pytest.msg['no_token_lifetime'])
         assert 'refresh' in response_body, msg_pattern.format(
-            'в теле ответа не содежится refresh-токен')
+            pytest.msg['no_refresh_token'])
 
         try:
             token = AccessToken(response_body['access'])
@@ -241,12 +240,12 @@ class TestConvertSocialToken:
         })
 
         assert http_status == 400, msg_pattern.format(
-            pytest.http_status_not_400)
+            pytest.msg['wrong_http_status'])
         assert app_status == 400010, msg_pattern.format(
-            'статус бизнес-логики не равен 400010')
+            pytest.msg['wrong_app_status'])
 
         assert response_body.get('message', '') == _('Invalid token.'), \
-            msg_pattern.format(pytest.wrong_message)
+            msg_pattern.format(pytest.msg['wrong_message'])
 
     def test_invalid_provider(self, valid_oauth_token):
         msg_pattern = f'При POST запросе {self.url} ' \
@@ -257,12 +256,12 @@ class TestConvertSocialToken:
         })
 
         assert http_status == 400, msg_pattern.format(
-            pytest.http_status_not_400)
+            pytest.msg['wrong_http_status'])
         assert app_status == 400009, msg_pattern.format(
-            'статус бизнес-логики не равен 400009')
+            pytest.msg['wrong_app_status'])
 
         assert response_body.get('message', '') == _('Provider is not found.'),\
-            msg_pattern.format(pytest.wrong_message)
+            msg_pattern.format(pytest.msg['wrong_message'])
 
     def test_blocked_user(self, vk_provider, social_user_data,
                           valid_oauth_token, mock_get_user_data, monkeypatch):
@@ -277,7 +276,7 @@ class TestConvertSocialToken:
             last_name=user_data['last_name'],
             is_active=False
         )
-        social_user = UserSocialAuth.objects.create(
+        UserSocialAuth.objects.create(
             user=user,
             provider=vk_provider,
             uid=user_data['id']
@@ -289,12 +288,12 @@ class TestConvertSocialToken:
         })
 
         assert http_status == 400, msg_pattern.format(
-            pytest.http_status_not_400)
+            pytest.msg['wrong_http_status'])
         assert app_status == 400007, msg_pattern.format(
-            'статус бизнес-логики не равен 400007')
+            pytest.msg['wrong_app_status'])
 
         assert response_body.get('message', '') == _('The user is blocked.'),\
-            msg_pattern.format(pytest.wrong_message)
+            msg_pattern.format(pytest.msg['wrong_message'])
 
         assert User.objects.all().count() == 1, msg_pattern.format(
             'создан дубль пользователя')
@@ -315,12 +314,12 @@ class TestConvertSocialToken:
         })
 
         assert http_status == 500, msg_pattern.format(
-            pytest.http_status_not_500)
+            pytest.msg['wrong_http_status'])
         assert app_status == 500003, msg_pattern.format(
-            'статус бизнес-логики не равен 500003')
+            pytest.msg['wrong_app_status'])
 
         assert response_body.get('message', '') == _('Error in token generation.'),\
-            msg_pattern.format(pytest.wrong_message)
+            msg_pattern.format(pytest.msg['wrong_message'])
 
     def test_user_creation_error(self, vk_provider, valid_oauth_token,
                                  social_user_data, mock_get_user_data,
@@ -336,6 +335,6 @@ class TestConvertSocialToken:
         })
 
         assert http_status == 500, msg_pattern.format(
-            pytest.http_status_not_500)
+            pytest.msg['wrong_http_status'])
         assert app_status == 500002, msg_pattern.format(
-            'статус бизнес-логики не равен 500002')
+            pytest.msg['wrong_app_status'])

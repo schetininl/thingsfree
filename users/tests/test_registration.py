@@ -37,9 +37,9 @@ class TestSecurityCodeSending:
                 'phone_number': valid_phone_number
             })
             assert http_status == 200, msg_pattern.format(
-                pytest.http_status_not_200)
+                pytest.msg['wrong_http_status'])
             assert app_status == 200000, msg_pattern.format(
-                pytest.app_status_not_200000)
+                pytest.msg['wrong_app_status'])
 
             queryset = SMSVerification.objects.filter(
                 phone_number=valid_phone_number
@@ -69,16 +69,16 @@ class TestSecurityCodeSending:
                 'phone_number': invalid_phone_number
             })
             assert http_status == 400, msg_pattern.format(
-                pytest.http_status_not_400)
+                pytest.msg['wrong_http_status'])
             assert app_status == 400001, msg_pattern.format(
-                'статус бизнес-логики не равен 400001')
+                pytest.msg['wrong_app_status'])
 
             assert not sender_mock.called, msg_pattern.format(
                 'отправляется СМС')
 
             actual_msg = response_body.get('message')
             assert actual_msg == _('Phone number is not valid.'), \
-                msg_pattern.format(pytest.wrong_msg)
+                msg_pattern.format(pytest.msg['wrong_message'])
 
     def test_used_phone_number(self, existent_user):
         msg_pattern = f'При POST запросе {self.url} телефоном, который ' \
@@ -89,16 +89,16 @@ class TestSecurityCodeSending:
                 'phone_number': existent_user.phone_number
             })
             assert http_status == 400, msg_pattern.format(
-                pytest.http_status_not_400)
+                pytest.msg['wrong_http_status'])
             assert app_status == 400002, msg_pattern.format(
-                'статус бизнес-логики не равен 400002')
+                pytest.msg['wrong_app_status'])
 
             assert not sender_mock.called, msg_pattern.format(
                 'отправляется СМС')
 
             actual_msg = response_body.get('message')
             assert actual_msg == _('A user with that phone already exists.'), \
-                msg_pattern.format(pytest.wrong_msg)
+                msg_pattern.format(pytest.msg['wrong_message'])
 
     def test_sms_sending_error(self, sms_sending_exception, valid_phone_number):
         msg_pattern = f'При POST запросе {self.url} с неработающим бэкэндом ' \
@@ -109,13 +109,13 @@ class TestSecurityCodeSending:
                 'phone_number': valid_phone_number
             })
             assert http_status == 500, msg_pattern.format(
-                pytest.http_status_not_500)
+                pytest.msg['wrong_http_status'])
             assert app_status == 500001, msg_pattern.format(
-                'статус бизнес-логики не равен 500001')
+                pytest.msg['wrong_app_status'])
 
             actual_msg = response_body.get('message')
             assert actual_msg == _('Error in sending verification code.'), \
-                msg_pattern.format(pytest.wrong_msg)
+                msg_pattern.format(pytest.msg['wrong_message'])
 
 
 @pytest.mark.django_db(transaction=True)
@@ -138,11 +138,11 @@ class TestSecurityCodeVerification:
                       f'подтверждения {{}}'
         http_status, app_status, response_body = self.post(valid_verification_data)
         assert http_status == 200, msg_pattern.format(
-            pytest.http_status_not_200)
+            pytest.msg['wrong_http_status'])
         assert app_status == 200000, msg_pattern.format(
-            pytest.app_status_not_200000)
+            pytest.msg['wrong_app_status'])
         assert response_body.get('message') == _('Security code is valid.'), \
-            msg_pattern.format(pytest.wrong_msg)
+            msg_pattern.format(pytest.msg['wrong_message'])
 
     def test_invalid_verification_data(self, client, invalid_verification_data):
         msg_pattern = f'При POST запросе {self.url} с неверным кодом ' \
@@ -150,11 +150,11 @@ class TestSecurityCodeVerification:
         http_status, app_status, response_body = self.post(
             invalid_verification_data)
         assert http_status == 400, msg_pattern.format(
-            pytest.http_status_not_400)
+            pytest.msg['wrong_http_status'])
         assert app_status == 400003, msg_pattern.format(
-            'статус бизнес-логики не равен 400003')
+            pytest.msg['wrong_app_status'])
         assert response_body.get('message') == _('Security code is not valid.'), \
-            msg_pattern.format(pytest.wrong_msg)
+            msg_pattern.format(pytest.msg['wrong_message'])
 
 
 @pytest.mark.django_db(transaction=True)
@@ -177,12 +177,12 @@ class TestSignup:
         http_status, app_status, response_body = self.post(valid_signup_data)
 
         assert http_status == 201, msg_pattern.format(
-            pytest.http_status_not_201)
+            pytest.msg['wrong_http_status'])
         assert app_status == 201000, msg_pattern.format(
-            pytest.app_status_not_201000)
+            pytest.msg['wrong_app_status'])
 
         assert response_body.get('message') == _('User account has been created.'), \
-            msg_pattern.format(pytest.wrong_msg)
+            msg_pattern.format(pytest.msg['wrong_message'])
 
         try:
             new_user = User.objects.get(username=valid_signup_data['username'])
@@ -199,12 +199,12 @@ class TestSignup:
             signup_data_invalid_verification)
 
         assert http_status == 400, msg_pattern.format(
-            pytest.http_status_not_400)
+            pytest.msg['wrong_http_status'])
         assert app_status == 400003, msg_pattern.format(
-            'статус бизнес-логики не равен 400003')
+            pytest.msg['wrong_app_status'])
 
         assert response_body.get('message') == _('Security code is not valid.'), \
-            msg_pattern.format(pytest.wrong_msg)
+            msg_pattern.format(pytest.msg['wrong_message'])
 
         assert not User.objects.all().exists(), msg_pattern.format(
             'в базе данных создан пользователь')
@@ -216,9 +216,9 @@ class TestSignup:
             signup_data_invalid_username)
 
         assert http_status == 400, msg_pattern.format(
-            pytest.http_status_not_400)
+            pytest.msg['wrong_http_status'])
         assert app_status == 400004, msg_pattern.format(
-            'статус бизнес-логики не равен 400004')
+            pytest.msg['wrong_app_status'])
 
         assert User.objects.all().count() == count_of_users_before, \
             msg_pattern.format('в базе данных создан пользователь')
@@ -230,12 +230,12 @@ class TestSignup:
         http_status, app_status, response_body = self.post(valid_signup_data)
 
         assert http_status == 500, msg_pattern.format(
-            pytest.http_status_not_500)
+            pytest.msg['wrong_http_status'])
         assert app_status == 500002, msg_pattern.format(
-            'статус бизнес-логики не равен 500002')
+            pytest.msg['wrong_app_status'])
 
         assert response_body.get('message') == _('User account has not been created.'), \
-            msg_pattern.format(pytest.wrong_msg)
+            msg_pattern.format(pytest.msg['wrong_message'])
 
 
 @pytest.mark.django_db(transaction=True)
@@ -259,9 +259,9 @@ class TestBindPhoneNumber:
             user_client, valid_verification_data)
 
         assert http_status == 200, msg_pattern.format(
-            pytest.http_status_not_200)
+            pytest.msg['wrong_http_status'])
         assert app_status == 200000, msg_pattern.format(
-            pytest.app_status_not_200000)
+            pytest.msg['wrong_app_status'])
 
         existent_user.refresh_from_db()
         current_phone = str(existent_user.phone_number)
@@ -274,9 +274,9 @@ class TestBindPhoneNumber:
             client, valid_verification_data)
 
         assert http_status == 401, msg_pattern.format(
-            pytest.http_status_not_401)
+            pytest.msg['wrong_http_status'])
         assert app_status == 401000, msg_pattern.format(
-            'статус бизнес-логики не равен 401000')
+            pytest.msg['wrong_app_status'])
 
     def test_invalid_security_code(self, user_client, invalid_verification_data):
         msg_pattern = f'При POST запросе {self.url} с неверным ' \
@@ -285,9 +285,9 @@ class TestBindPhoneNumber:
             user_client, invalid_verification_data)
 
         assert http_status == 400, msg_pattern.format(
-            pytest.http_status_not_400)
+            pytest.msg['wrong_http_status'])
         assert app_status == 400003, msg_pattern.format(
-            'статус бизнес-логики не равен 400003')
+            pytest.msg['wrong_app_status'])
 
     def test_server_error(self, user_client, valid_verification_data,
                           mock_user_save, monkeypatch):
@@ -298,9 +298,9 @@ class TestBindPhoneNumber:
             user_client, valid_verification_data)
 
         assert http_status == 500, msg_pattern.format(
-            pytest.http_status_not_500)
+            pytest.msg['wrong_http_status'])
         assert app_status == 500004, msg_pattern.format(
-            'статус бизнес-логики не равен 500004')
+            pytest.msg['wrong_app_status'])
 
 
 @pytest.mark.usefixtures('social_providers_setup')
@@ -316,11 +316,11 @@ class TestSocialProviders:
         response = self.client.get(self.url)
 
         assert response.status_code == 200, msg_pattern.format(
-            pytest.http_status_not_200)
+            pytest.msg['wrong_http_status'])
 
         response_data = response.json()
         assert response_data.get('status', 0) == 200000, msg_pattern.format(
-            pytest.app_status_not_200000)
+            pytest.msg['wrong_app_status'])
 
         response_body = response_data.get('body', {})
         assert 'providers' in response_body, msg_pattern.format(
