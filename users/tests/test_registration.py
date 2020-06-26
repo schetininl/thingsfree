@@ -152,7 +152,7 @@ class TestSecurityCodeVerification:
         assert http_status == 400, msg_pattern.format(
             pytest.http_status_not_400)
         assert app_status == 400003, msg_pattern.format(
-            'статус бизнес-логики не равен 400003')
+            pytest.app_status_not_400003)
         assert response_body.get('message') == _('Security code is not valid.'), \
             msg_pattern.format(pytest.wrong_msg)
 
@@ -201,7 +201,7 @@ class TestSignup:
         assert http_status == 400, msg_pattern.format(
             pytest.http_status_not_400)
         assert app_status == 400003, msg_pattern.format(
-            'статус бизнес-логики не равен 400003')
+            pytest.app_status_not_400003)
 
         assert response_body.get('message') == _('Security code is not valid.'), \
             msg_pattern.format(pytest.wrong_msg)
@@ -287,7 +287,7 @@ class TestBindPhoneNumber:
         assert http_status == 400, msg_pattern.format(
             pytest.http_status_not_400)
         assert app_status == 400003, msg_pattern.format(
-            'статус бизнес-логики не равен 400003')
+            pytest.app_status_not_400003)
 
     def test_server_error(self, user_client, valid_verification_data,
                           mock_user_save, monkeypatch):

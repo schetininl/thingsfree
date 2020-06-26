@@ -41,11 +41,11 @@ class TestTokenObtain:
         refresh_token = response_body.get('refresh', '')
         expires_in = response_body.get('expires_in', 0)
         assert access_token != '', msg_pattern.format(
-            'в теле ответа не содержится токен доступа')
+            pytest.no_token)
         assert refresh_token != '', msg_pattern.format(
             'в теле ответа не содержится refresh-токен')
         assert expires_in != 0, msg_pattern.format(
-            'в теле ответа не содержится время жизни токена')
+            pytest.no_token_lifetime)
 
         try:
             token = AccessToken(access_token)
@@ -151,11 +151,11 @@ class TestTokenRefresh:
         refresh_token = response_body.get('refresh', '')
         expires_in = response_body.get('expires_in', 0)
         assert access_token != '', msg_pattern.format(
-            'в теле ответа не содержится токен доступа')
+            pytest.no_token)
         assert refresh_token != '', msg_pattern.format(
             'в теле ответа не содержится refresh-токен')
         assert expires_in != '', msg_pattern.format(
-            'в теле ответа не содержится время жизни токена')
+            pytest.no_token_lifetime)
 
     def test_invalid_refres_token(self, invalid_refresh_token):
         msg_pattern = f'При POST запросе {self.url} с невалидными данными {{}}'
@@ -205,11 +205,11 @@ class TestConvertSocialToken:
             pytest.app_status_not_200000)
 
         assert 'access' in response_body, msg_pattern.format(
-            'в теле ответа не содержится токен доступа')
+            pytest.no_token)
         assert 'expires_in' in response_body, msg_pattern.format(
-            'в теле ответа не содержится время жизни токена')
+            pytest.no_token_lifetime)
         assert 'refresh' in response_body, msg_pattern.format(
-            'в теле ответа не содежится refresh-токен')
+            pytest.no_refresh_token)
 
         try:
             token = AccessToken(response_body['access'])
@@ -277,7 +277,7 @@ class TestConvertSocialToken:
             last_name=user_data['last_name'],
             is_active=False
         )
-        social_user = UserSocialAuth.objects.create(
+        UserSocialAuth.objects.create(
             user=user,
             provider=vk_provider,
             uid=user_data['id']
