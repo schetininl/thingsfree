@@ -1,8 +1,10 @@
 import random
 
 from django.conf import settings
+from django.db.utils import IntegrityError
 from phone_verify.services import get_sms_backend
 import pytest
+from rest_framework.test import APIClient
 from rest_framework_simplejwt.tokens import RefreshToken
 from twilio.base.exceptions import TwilioRestException
 
@@ -76,6 +78,14 @@ def blocked_user(django_user_model, default_password):
         password=default_password,
         is_active=False
     )
+
+
+@pytest.fixture
+def user_client(existent_user):
+    client = APIClient()
+    refresh = RefreshToken.for_user(existent_user)
+    client.credentials(HTTP_AUTHORIZATION=f'Bearer {refresh.access_token}')
+    return client
 
 
 @pytest.fixture
@@ -284,8 +294,8 @@ def social_user_data():
 @pytest.fixture
 def mock_get_user_data(valid_oauth_token, social_user_data):
     """
-    Функция-пустышка, возвращающая 'замоканные' ответы социальных сетей
-    на запросы о данных профиля пользователя.
+    Функция-заглушка для вызова API социальных сетей. Возвращает данные
+    гипотетических пользователей.
     """
     def get_json(self, url, *args, **kwargs):
         token = kwargs['params']['access_token']
@@ -320,8 +330,19 @@ def mock_get_user_data(valid_oauth_token, social_user_data):
 
 @pytest.fixture
 def mock_generate_token():
-    """Функция-пустышка для генерации токена доступа, кидающая исключение."""
+    """
+    Функция-пустышка для эмуляции исключения во время генерации токена доступа.
+    """
     def generate_token(cls, user):
         raise Exception
 
     return generate_token
+
+
+@pytest.fixture
+def mock_user_save():
+    """Функция-пустышка для эмуляции исключения во время записи пользователя."""
+    def user_save(*args, **kwargs):
+        raise IntegrityError
+
+    return user_save

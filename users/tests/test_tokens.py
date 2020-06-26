@@ -323,13 +323,11 @@ class TestConvertSocialToken:
             msg_pattern.format(pytest.wrong_message)
 
     def test_user_creation_error(self, vk_provider, valid_oauth_token,
-                                 social_user_data, mock_get_user_data, monkeypatch):
+                                 social_user_data, mock_get_user_data,
+                                 mock_user_save, monkeypatch):
         msg_pattern = f'При POST запросе {self.url}, приводящем к ошибке ' \
                       f'создания пользователя {{}}'
         monkeypatch.setattr(BaseAuth, 'get_json', mock_get_user_data)
-
-        def mock_user_save(*args, **kwargs):
-            raise IntegrityError
         monkeypatch.setattr(User, 'save', mock_user_save)
 
         http_status, app_status, response_body = self.post({

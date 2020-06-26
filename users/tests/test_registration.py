@@ -223,13 +223,10 @@ class TestSignup:
         assert User.objects.all().count() == count_of_users_before, \
             msg_pattern.format('в базе данных создан пользователь')
 
-    def test_server_error(self, valid_signup_data, monkeypatch):
+    def test_server_error(self, valid_signup_data, mock_user_save, monkeypatch):
         msg_pattern = f'При POST запросе {self.url}, приводящем к внутренней ' \
                       f'ошибке сервера {{}}'
-
-        def mock_user_create(*args, **kwargs):
-            raise Exception
-        monkeypatch.setattr(User.objects, 'create_user', mock_user_create)
+        monkeypatch.setattr(User, 'save', mock_user_save)
         http_status, app_status, response_body = self.post(valid_signup_data)
 
         assert http_status == 500, msg_pattern.format(
@@ -239,6 +236,71 @@ class TestSignup:
 
         assert response_body.get('message') == _('User account has not been created.'), \
             msg_pattern.format(pytest.wrong_msg)
+
+
+@pytest.mark.django_db(transaction=True)
+class TestBindPhoneNumber:
+    """Набор тестов для привязки номера телефона к аккаунту."""
+
+    url = '/api/v1/phone/bind/'
+
+    def post(self, client, request_body):
+        response = client.post(self.url, data=request_body)
+        response_data = response.json()
+        response_body = response_data.get('body', {})
+        app_status = response_data.get('status', 0)
+
+        return response.status_code, app_status, response_body
+
+    def test_successful_bind(self, user_client, existent_user,
+                             valid_verification_data):
+        msg_pattern = f'При POST запросе {self.url} с валидными данными {{}}'
+        http_status, app_status, response_body = self.post(
+            user_client, valid_verification_data)
+
+        assert http_status == 200, msg_pattern.format(
+            pytest.http_status_not_200)
+        assert app_status == 200000, msg_pattern.format(
+            pytest.app_status_not_200000)
+
+        existent_user.refresh_from_db()
+        current_phone = str(existent_user.phone_number)
+        assert current_phone == valid_verification_data['phone_number'], \
+            msg_pattern.format('телефонный номер пользователя не был изменен')
+
+    def test_unauthorized_user(self, client, valid_verification_data):
+        msg_pattern = f'При POST запросе {self.url} без токена доступа {{}}'
+        http_status, app_status, response_body = self.post(
+            client, valid_verification_data)
+
+        assert http_status == 401, msg_pattern.format(
+            pytest.http_status_not_401)
+        assert app_status == 401000, msg_pattern.format(
+            'статус бизнес-логики не равен 401000')
+
+    def test_invalid_security_code(self, user_client, invalid_verification_data):
+        msg_pattern = f'При POST запросе {self.url} с неверным ' \
+                      f'кодом подтверждения {{}}'
+        http_status, app_status, response_body = self.post(
+            user_client, invalid_verification_data)
+
+        assert http_status == 400, msg_pattern.format(
+            pytest.http_status_not_400)
+        assert app_status == 400003, msg_pattern.format(
+            'статус бизнес-логики не равен 400003')
+
+    def test_server_error(self, user_client, valid_verification_data,
+                          mock_user_save, monkeypatch):
+        msg_pattern = f'При POST запросе {self.url} с валидными данными {{}}'
+        monkeypatch.setattr(User, 'save', mock_user_save)
+
+        http_status, app_status, response_body = self.post(
+            user_client, valid_verification_data)
+
+        assert http_status == 500, msg_pattern.format(
+            pytest.http_status_not_500)
+        assert app_status == 500004, msg_pattern.format(
+            'статус бизнес-логики не равен 500004')
 
 
 @pytest.mark.usefixtures('social_providers_setup')
