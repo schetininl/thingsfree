@@ -5,9 +5,13 @@ pytest_plugins = [
     'users.tests.fixtures',
 ]
 
+
 def pytest_configure():
-    pytest.wrong_msg = 'ответ содержит неверное сообщение'
-    pytest.http_status_not_200 = 'HTTP статус ответа не равен 200'
-    pytest.http_status_not_201 = 'HTTP статус ответа не равен 201'
-    pytest.http_status_not_400 = 'HTTP статус ответа не равен 400'
-    pytest.http_status_not_500 = 'HTTP статус ответа не равен 500'
+    pytest.msg = {
+        'wrong_http_status': 'неверный HTTP статус ответа',
+        'wrong_app_status': 'неверный статус бизнес-логики',
+        'wrong_message': 'ответ содержит неверное сообщение',
+        'no_token': 'в теле ответа не содержится токен доступа',
+        'no_token_life': 'в теле ответа не содержится время жизни токена',
+        'no_refresh_token': 'в теле ответа не содежится refresh-токен',
+    }

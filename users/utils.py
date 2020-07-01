@@ -1,6 +1,6 @@
-from phone_verify.services import PhoneVerificationService, get_sms_backend
-
 import logging
+
+from phone_verify.services import PhoneVerificationService, get_sms_backend
 
 logger = logging.getLogger(__name__)
 

@@ -1,4 +1,5 @@
 import os
+from datetime import timedelta
 
 from . import common
 
@@ -15,3 +16,11 @@ DATABASES = {
         'NAME': os.path.join(common.BASE_DIR, 'db.sqlite3'),
     }
 }
+
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(days=5),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=14),
+    'ROTATE_REFRESH_TOKENS': True,
+}
+
+SOCIAL_AUTH_LOGIN_REDIRECT_URL = 'https://localhost/'
