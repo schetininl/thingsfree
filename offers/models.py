@@ -94,11 +94,11 @@ class OfferPhoto(models.Model):
     # поле для ссылки на изображение:
     link = models.ImageField(upload_to=nameFile, blank=True, null=True)
 
-    def save(self,*args,**kwargs):
+    #def save(self,*args,**kwargs):
         
-        if OfferPhoto.objects.filter(offer= self.offer.id).count()>=5:
-            return 
-        super(OfferPhoto,self).save(*args,**kwargs)
+    #    if OfferPhoto.objects.filter(offer= self.offer.id).count()>=5:
+    #        return 
+    #    super(OfferPhoto,self).save(*args,**kwargs)
             
     
     class Meta:

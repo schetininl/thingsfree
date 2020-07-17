@@ -1,15 +1,17 @@
+from django.shortcuts import get_object_or_404
 from django.shortcuts import render
 
 from django.contrib.auth import get_user_model
+
 from rest_framework import filters, mixins, viewsets
 from rest_framework.viewsets import ModelViewSet
 from rest_framework import permissions
 from rest_framework.parsers import FileUploadParser,MultiPartParser,FormParser,JSONParser
+from rest_framework import filters, mixins, viewsets,serializers, status
 
 from .serializers import OfferClosedSerializer, OfferNotClosedSerializer, OfferCategorySerializer, OfferPhotoSerializer
 from .models import OfferCategory, Offer, OfferPhoto
 from users.models import User
-
 #from .serializers import RegionSerializer, CitySerializer
 #from cities.models import City, Region
 
@@ -60,12 +62,26 @@ class OfferCategoryViewSet(viewsets.GenericViewSet,
 #    filter_backends = [filters.SearchFilter]
 #    search_fields = ['name', ]
 
-class OfferPhotoViewSet(viewsets.GenericViewSet,
-                      mixins.ListModelMixin,
-                      mixins.CreateModelMixin,
-                      mixins.DestroyModelMixin):
+#class OfferPhotoViewSet(viewsets.GenericViewSet,
+#                      mixins.ListModelMixin,
+#                      mixins.CreateModelMixin,
+#                      mixins.DestroyModelMixin):
+#    queryset = OfferPhoto.objects.all()
+#    serializer_class = OfferPhotoSerializer 
+#    lookup_field = 'id'
+#    permission_classes = [permissions.AllowAny, ]
+#    parser_classes = (MultiPartParser,FormParser,JSONParser,)
+
+class OfferPhotoViewSet(ModelViewSet):
     queryset = OfferPhoto.objects.all()
-    serializer_class = OfferPhotoSerializer 
-    lookup_field = 'id'
-    permission_classes = [permissions.AllowAny, ]
-    parser_classes = (MultiPartParser,FormParser,JSONParser,)
+    permission_classes = [permissions.AllowAny,]
+    serializer_class = OfferPhotoSerializer  
+    
+    def perform_create(self, serializer):  
+        if OfferPhoto.objects.filter(offer = self.request.data.get('offer')).count() >= 5: 
+       
+            raise serializers.ValidationError(
+                detail="limit photos",
+                code=status.HTTP_400_BAD_REQUEST
+            )    
+        serializer.save(offer_id=self.request.data.get('offer'))
