@@ -29,6 +29,12 @@ class CreateUserSerializer(serializers.ModelSerializer):
         return User.objects.create_user(**validated_data)
 
 
+class ShortUserProfileSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ('id', 'username', 'first_name', 'last_name', 'avatar')
+
+
 class TokenObtainPairSerializer(BaseTokenObtainPairSerializer):
     username_field = 'user'
 
