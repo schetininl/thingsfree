@@ -1,9 +1,8 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 from django.utils.translation import gettext_lazy as _
-
-
-from .models import User, TypeOfContact, UserContact
+from social_django.models import Association, Nonce, UserSocialAuth
+from .models import TypeOfContact, User, UserContact, SocialMedia
 
 
 @admin.register(User)
@@ -19,6 +18,9 @@ class CustomUserAdmin(UserAdmin):
         (_('Important dates'), {'fields': ('last_login', 'date_joined')}),
     )
 
+    list_display = ('username', 'email', 'phone_number', 'first_name',
+                    'last_name', 'is_staff')
+
 
 @admin.register(TypeOfContact)
 class TypeOfContactAdmin(admin.ModelAdmin):
@@ -28,3 +30,13 @@ class TypeOfContactAdmin(admin.ModelAdmin):
 @admin.register(UserContact)
 class UserContactAdmin(admin.ModelAdmin):
     fields = ('user', 'type', 'text')
+
+
+@admin.register(SocialMedia)
+class SocialMediaAdmin(admin.ModelAdmin):
+    exclude = ('id',)
+
+
+admin.site.unregister(Association)
+admin.site.unregister(Nonce)
+admin.site.unregister(UserSocialAuth)

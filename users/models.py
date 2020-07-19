@@ -9,7 +9,6 @@ from cities.models import City
 
 
 class User(AbstractUser):
-
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     phone_number = PhoneNumberField(
         _('phone'),
@@ -17,7 +16,8 @@ class User(AbstractUser):
         error_messages={
             'unique': _('A user with that phone already exists.')
         },
-        blank=True
+        blank=True,
+        null=True
     )
     avatar = models.CharField(
         _('photo'),
@@ -66,7 +66,24 @@ class UserContact(models.Model):
     )
     text = models.TextField(_('text'))
 
-# Create your models here.
     class Meta:
         verbose_name = _('User contact')
         verbose_name_plural = _('User contacts')
+
+
+class SocialMedia(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    name = models.CharField(_('name'), max_length=256)
+    oauth_backend = models.CharField(
+        _('OAuth backend'),
+        max_length=256,
+        unique=True
+    )
+    logo = models.ImageField(_('logo'), upload_to='social_logos')
+
+    class Meta:
+        verbose_name = _('Social media')
+        verbose_name_plural = _('Social media')
+
+    def __str__(self):
+        return self.name
