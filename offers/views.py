@@ -23,6 +23,8 @@ class OfferViewSet(ModelViewSet):
     serializer_class = OfferNotClosedSerializer
     filter_backends = [filters.OrderingFilter]
     ordering_fields = ['pub_date',]
+    def perform_create(self, serializer):
+        serializer.save(author=self.request.user)
 
 class OfferCategoryViewSet(viewsets.GenericViewSet,
                       mixins.ListModelMixin,
