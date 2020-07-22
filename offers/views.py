@@ -74,6 +74,7 @@ class OfferCategoryViewSet(viewsets.GenericViewSet,
 #    permission_classes = [permissions.AllowAny, ]
 #    parser_classes = (MultiPartParser,FormParser,JSONParser,)
 
+
 class OfferPhotoViewSet(ModelViewSet):
     queryset = OfferPhoto.objects.all()
     permission_classes = [permissions.AllowAny,]
