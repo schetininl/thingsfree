@@ -75,15 +75,25 @@ class OfferCategoryViewSet(viewsets.GenericViewSet,
 #    parser_classes = (MultiPartParser,FormParser,JSONParser,)
 
 class OfferPhotoViewSet(ModelViewSet):
-    queryset = OfferPhoto.objects.all()
+
+    #queryset = OfferPhoto.objects.all()
     permission_classes = [permissions.AllowAny,]
     serializer_class = OfferPhotoSerializer  
+
+    def get_queryset(self):
+        offer = get_object_or_404(Offer, id=self.kwargs.get("offer_id"))
+        photos = OfferPhoto.objects.filter(offer=offer)
+        return photos
+
     
     def perform_create(self, serializer):  
-        if OfferPhoto.objects.filter(offer = self.request.data.get('offer')).count() >= 5: 
+        offer = get_object_or_404(Offer, id=self.kwargs.get("offer_id"))
+
+        if OfferPhoto.objects.filter(offer = offer).count() >= 5: 
        
             raise serializers.ValidationError(
                 detail="limit photos",
                 code=status.HTTP_400_BAD_REQUEST
             )    
-        serializer.save(offer_id=self.request.data.get('offer'))
+#        serializer.save(offer_id=self.request.data.get('offer'))
+        serializer.save(offer_id=offer.id)
