@@ -1,4 +1,5 @@
 import random
+from  itertools import cycle
 
 from django.conf import settings
 from django.contrib.auth import get_user_model
@@ -421,3 +422,32 @@ def authorized_user_followers(existent_user, user_generator):
             result.append(follower)
 
     return result
+
+
+@pytest.fixture
+def authorized_user_following(existent_user, user_generator):
+    """Список подписок текущего авторизованного пользователя."""
+
+    result = []
+    for _ in range(10):
+        author = next(user_generator)
+        if author is not None:
+            Following.objects.create(author=author, follower=existent_user)
+            result.append(author)
+
+    return result
+
+
+@pytest.fixture
+def limit_offset_combinations():
+    """
+    Перечень комибнаций параметров `limit` и `offset`, передаваемых
+    в GET-запросах для управления размером и смещением результирующей выборки.
+    """
+    return cycle([
+        None,
+        {'limit': 5, 'offset': 0},
+        {'limit': 5, 'offset': 2},
+        {'limit': 100, 'offset': 0},
+        {'limit': 5, 'offset': 100}
+    ])
