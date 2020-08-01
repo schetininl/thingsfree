@@ -9,7 +9,7 @@ from rest_framework import permissions
 from rest_framework.parsers import FileUploadParser,MultiPartParser,FormParser,JSONParser
 from rest_framework import filters, mixins, viewsets,serializers, status
 
-from .serializers import OfferClosedSerializer, OfferNotClosedSerializer, OfferCategorySerializer, OfferPhotoSerializer
+from .serializers import OfferClosedSerializer, OfferNotClosedSerializer, OfferCategorySerializer, OfferPhotoSerializer, OfferNotClosedHigherLevelSerializer
 from .models import OfferCategory, Offer, OfferPhoto
 from users.models import User
 #from .serializers import RegionSerializer, CitySerializer
@@ -20,7 +20,8 @@ from users.models import User
 class OfferViewSet(ModelViewSet):
     queryset = Offer.objects.filter(is_closed=False)
     permission_classes = [permissions.AllowAny,]
-    serializer_class = OfferNotClosedSerializer
+    #serializer_class = OfferNotClosedSerializer
+    serializer_class = OfferNotClosedHigherLevelSerializer
     filter_backends = [filters.OrderingFilter]
     ordering_fields = ['pub_date',]
     def perform_create(self, serializer):
