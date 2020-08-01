@@ -8,7 +8,9 @@ from rest_framework.viewsets import ModelViewSet
 from rest_framework import permissions
 from rest_framework.parsers import FileUploadParser,MultiPartParser,FormParser,JSONParser
 from rest_framework import filters, mixins, viewsets,serializers, status
+from rest_framework.response import Response #!
 
+from . import responses
 from .serializers import OfferClosedSerializer, OfferNotClosedSerializer, OfferCategorySerializer, OfferPhotoSerializer, OfferNotClosedHigherLevelSerializer
 from .models import OfferCategory, Offer, OfferPhoto
 from users.models import User
@@ -20,12 +22,39 @@ from users.models import User
 class OfferViewSet(ModelViewSet):
     queryset = Offer.objects.filter(is_closed=False)
     permission_classes = [permissions.AllowAny,]
-    #serializer_class = OfferNotClosedSerializer
-    serializer_class = OfferNotClosedHigherLevelSerializer
+    serializer_class = OfferNotClosedSerializer
+    #serializer_class = OfferNotClosedHigherLevelSerializer
     filter_backends = [filters.OrderingFilter]
     ordering_fields = ['pub_date',]
+
     def perform_create(self, serializer):
         serializer.save(author=self.request.user)
+    
+    def list(self, request, *args, **kwargs):
+        
+        queryset = self.filter_queryset(self.get_queryset())
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return responses.create_response(
+                200000,
+                serializer.data
+                )
+        serializer = self.get_serializer(queryset, many=True)
+        return  responses.create_response(
+                200000,
+                serializer.data 
+            )
+
+    def retrieve(self, request, *args, **kwargs): #чтобы единичный пост с этими полями показывал
+        instance = self.get_object()
+        serializer = self.get_serializer(instance)
+        return responses.create_response(
+                200000,
+                serializer.data 
+            )
+
+ 
 
 class OfferCategoryViewSet(viewsets.GenericViewSet,
                       mixins.ListModelMixin,
