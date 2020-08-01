@@ -6,7 +6,6 @@ from phone_verify.serializers import PhoneSerializer, SMSVerificationSerializer
 from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.exceptions import \
     AuthenticationFailed, PermissionDenied, NotAuthenticated
-from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.permissions import AllowAny
 from rest_framework.viewsets import GenericViewSet
 from rest_framework_simplejwt.exceptions import TokenError
@@ -193,7 +192,6 @@ def convert_social_token(request):
 
 
 class FollowingViewSet(GenericViewSet):
-    pagination_class = LimitOffsetPagination
 
     def get_user(self, request, user_id):
         if user_id == 'me':
@@ -220,22 +218,15 @@ class FollowingViewSet(GenericViewSet):
             lookup_field = 'author'
 
         page = self.paginate_queryset(queryset)
-        if page is not None:
-            serializer = serializers.ShortUserProfileSerializer(
-                [getattr(obj, lookup_field) for obj in page],
-                many=True
-            )
-            paginated_response = super().get_paginated_response(serializer.data)
-            return responses.create_response(
-                200000,
-                paginated_response.data
-            )
-
         serializer = serializers.ShortUserProfileSerializer(
-            [getattr(obj, lookup_field) for obj in queryset],
+            [getattr(obj, lookup_field) for obj in page],
             many=True
         )
-        return responses.create_response(200000, serializer.data)
+        paginated_response = super().get_paginated_response(serializer.data)
+        return responses.create_response(
+            200000,
+            paginated_response.data
+        )
 
     @action(detail=False, methods=['GET'], permission_classes=[AllowAny],
             name='followers')
