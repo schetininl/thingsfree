@@ -24,7 +24,7 @@ from users.models import User
 
 class OfferViewSet(ModelViewSet):
     queryset = Offer.objects.filter(is_closed=False)
-    permission_classes = [permissions.AllowAny, offer_permissions.IsOwnerOrReadOnly, ]
+    permission_classes = [ offer_permissions.IsOwnerOrReadOnly, ]
     pagination_class = LimitOffsetPagination
     serializer_class = OfferNotClosedSerializer
     filter_backends = [filters.OrderingFilter]
@@ -70,7 +70,7 @@ class OfferCategoryViewSet(viewsets.GenericViewSet,
     queryset = OfferCategory.objects.all()
     serializer_class = OfferCategorySerializer
     lookup_field = 'id'
-    permission_classes = [permissions.AllowAny, offer_permissions.IsAdminOrReadOnly,  ]
+    permission_classes = [offer_permissions.IsAdminOrReadOnly,  ]
     filter_backends = [filters.SearchFilter]
     search_fields = ['name', ]
 
@@ -113,7 +113,7 @@ class OfferCategoryViewSet(viewsets.GenericViewSet,
 class OfferPhotoViewSet(ModelViewSet):
 
     #queryset = OfferPhoto.objects.all()
-    permission_classes = [permissions.AllowAny, offer_permissions.IsOwnerOrReadOnly, ]
+    permission_classes = [ offer_permissions.IsOwnerOrReadOnly, ]
     serializer_class = OfferPhotoSerializer  
 
     def get_queryset(self):

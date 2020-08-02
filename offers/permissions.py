@@ -9,8 +9,8 @@ class IsOwnerOrReadOnly(permissions.BasePermission):
 
         if hasattr(obj, 'author'):
             return obj.author == request.user
-        elif hasattr(obj, 'user'):
-            return obj.user == request.user
+        elif hasattr(obj, 'user'): # пока непонятно зачем доп проверка, может убрать??
+            return obj.user == request.user #  пока непонятно зачем доп проверка, может убрать??
 
 class IsAdminOrReadOnly(permissions.BasePermission):
 
