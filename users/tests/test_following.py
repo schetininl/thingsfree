@@ -84,6 +84,17 @@ class TestFollowersList:
             assert follower in authorized_user_followers, msg_pattern.format(
                 'ответ содержит неверный список подписчиков')
 
+    def test_unauthorized_user_followers(self, client):
+        msg_pattern = f'При GET запросе /api/v1/users/me/followers/ ' \
+                      f'без токена доступа {{}}'
+
+        http_status, app_status, response_body = self.get(client, 'me')
+
+        assert http_status == 401, msg_pattern.format(
+            pytest.msg['wrong_http_status'])
+        assert app_status == 401000, msg_pattern.format(
+            pytest.msg['wrong_app_status'])
+
 
 @pytest.mark.django_db(transaction=True)
 class TestFollowingList:
@@ -162,6 +173,17 @@ class TestFollowingList:
 
             assert author in authorized_user_following, msg_pattern.format(
                 'ответ содержит неверный список подписок')
+
+    def test_unauthorized_user_following(self, client):
+        msg_pattern = f'При GET запросе /api/v1/users/me/following/ ' \
+                      f'без токена доступа {{}}'
+
+        http_status, app_status, response_body = self.get(client, 'me')
+
+        assert http_status == 401, msg_pattern.format(
+            pytest.msg['wrong_http_status'])
+        assert app_status == 401000, msg_pattern.format(
+            pytest.msg['wrong_app_status'])
 
 
 @pytest.mark.django_db(transaction=True)
