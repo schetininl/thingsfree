@@ -11,6 +11,7 @@ from rest_framework import filters, mixins, viewsets,serializers, status
 from rest_framework.response import Response #!
 
 from . import responses
+from . import permissions as offer_permissions
 from .serializers import OfferClosedSerializer, OfferNotClosedSerializer, OfferCategorySerializer, OfferPhotoSerializer
 from .models import OfferCategory, Offer, OfferPhoto
 from users.models import User
@@ -21,7 +22,7 @@ from users.models import User
 
 class OfferViewSet(ModelViewSet):
     queryset = Offer.objects.filter(is_closed=False)
-    permission_classes = [permissions.AllowAny,]
+    permission_classes = [permissions.AllowAny, offer_permissions.IsOwnerOrReadOnly, ]
     serializer_class = OfferNotClosedSerializer
     filter_backends = [filters.OrderingFilter]
     ordering_fields = ['pub_date',]
@@ -63,7 +64,7 @@ class OfferCategoryViewSet(viewsets.GenericViewSet,
     queryset = OfferCategory.objects.all()
     serializer_class = OfferCategorySerializer
     lookup_field = 'id'
-    permission_classes = [permissions.AllowAny, ]
+    permission_classes = [permissions.AllowAny, offer_permissions.IsAdminOrReadOnly,  ]
     filter_backends = [filters.SearchFilter]
     search_fields = ['name', ]
 
@@ -106,7 +107,7 @@ class OfferCategoryViewSet(viewsets.GenericViewSet,
 class OfferPhotoViewSet(ModelViewSet):
 
     #queryset = OfferPhoto.objects.all()
-    permission_classes = [permissions.AllowAny,]
+    permission_classes = [permissions.AllowAny, offer_permissions.IsOwnerOrReadOnly, ]
     serializer_class = OfferPhotoSerializer  
 
     def get_queryset(self):
