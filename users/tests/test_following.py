@@ -37,7 +37,7 @@ class TestFollowersList:
 
             count_of_followers = len(followers)
             assert response_body['count'] == count_of_followers, \
-                msg_pattern.format('в поле ответа count неверное значение')
+                msg_pattern.format(pytest.msg['wrong_total_count'])
 
             if query_params is None:
                 expected_retrieve_size = count_of_followers
@@ -48,7 +48,7 @@ class TestFollowersList:
                 )
 
             assert len(response_body['results']) == expected_retrieve_size, \
-                msg_pattern.format('неверный размер выборки в ответе')
+                msg_pattern.format(pytest.msg['wrong_results_size'])
 
             for result_item in response_body['results']:
                 follower = User.objects.get(pk=result_item['id'])
@@ -74,9 +74,9 @@ class TestFollowersList:
 
         count_of_followers = len(authorized_user_followers)
         assert response_body['count'] == count_of_followers, \
-            msg_pattern.format('в поле ответа count неверное значение')
+            msg_pattern.format(pytest.msg['wrong_total_count'])
         assert len(response_body['results']) == count_of_followers, \
-            msg_pattern.format('неверный размер выборки в ответе')
+            msg_pattern.format(pytest.msg['wrong_results_size'])
 
         for result_item in response_body['results']:
             follower = User.objects.get(pk=result_item['id'])
@@ -127,7 +127,7 @@ class TestFollowingList:
 
             count_of_authors = len(authors)
             assert response_body['count'] == count_of_authors, \
-                msg_pattern.format('в поле ответа count неверное значение')
+                msg_pattern.format(pytest.msg['wrong_total_count'])
 
             if query_params is None:
                 expected_retrieve_size = count_of_authors
@@ -138,7 +138,7 @@ class TestFollowingList:
                 )
 
             assert len(response_body['results']) == expected_retrieve_size, \
-                msg_pattern.format('неверный размер выборки в ответе')
+                msg_pattern.format(pytest.msg['wrong_results_size'])
 
             for result_item in response_body['results']:
                 author = User.objects.get(pk=result_item['id'])
@@ -164,9 +164,9 @@ class TestFollowingList:
 
         count_of_authors = len(authorized_user_following)
         assert response_body['count'] == count_of_authors, \
-            msg_pattern.format('в поле ответа count неверное значение')
+            msg_pattern.format(pytest.msg['wrong_total_count'])
         assert len(response_body['results']) == count_of_authors, \
-            msg_pattern.format('неверный размер выборки в ответе')
+            msg_pattern.format(pytest.msg['wrong_results_size'])
 
         for result_item in response_body['results']:
             author = User.objects.get(pk=result_item['id'])
@@ -236,7 +236,7 @@ class TestFollowChange:
             pytest.msg['wrong_app_status'])
 
         assert existent_user.following.count() == 0, msg_pattern.format(
-            'создается ненужная подписка')
+            pytest.msg['needless_following'])
 
     def test_following_exists(self, existent_user, user_client,
                               authorized_user_following):
@@ -269,7 +269,7 @@ class TestFollowChange:
             pytest.msg['wrong_app_status'])
 
         assert existent_user.following.count() == 0, msg_pattern.format(
-            'создается ненужная подписка')
+            pytest.msg['needless_following'])
 
     def test_unauthorized_follow(self, client, existent_user):
         msg_pattern = f'При POST запросе /api/v1/users/user_id/follow/ ' \
@@ -287,7 +287,7 @@ class TestFollowChange:
             pytest.msg['wrong_app_status'])
 
         assert existent_user.followers.count() == 0, msg_pattern.format(
-            'создается ненужная подписка')
+            pytest.msg['needless_following'])
 
     def test_follow_nonexistant_user(self, user_client, existent_user):
         msg_pattern = f'При попытке подписаться на несуществующего пользователя {{}}'
@@ -304,7 +304,7 @@ class TestFollowChange:
             pytest.msg['wrong_app_status'])
 
         assert existent_user.followers.count() == 0, msg_pattern.format(
-            'создается ненужная подписка')
+            pytest.msg['needless_following'])
 
     def test_unfollow(self, user_client, existent_user, authorized_user_following):
         msg_pattern = f'При POST запросе /api/v1/users/user_id/unfollow/ {{}}'

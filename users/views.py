@@ -254,7 +254,7 @@ class FollowingViewSet(GenericViewSet):
             )
             if not created:
                 return responses.FOLLOWING_EXISTS
-        except:
+        except Exception:
             return responses.FOLLOWING_CREATION_ERROR
 
         return responses.FOLLOWING_CREATION_OK
