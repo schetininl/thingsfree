@@ -119,7 +119,7 @@ class OfferCategoryViewSet(viewsets.GenericViewSet,
 class OfferPhotoViewSet(ModelViewSet):
 
     #queryset = OfferPhoto.objects.all()
-    permission_classes = [ offer_permissions.IsOwnerOrReadOnly, ]
+    permission_classes = [ offer_permissions.IsOfferAuthorOrReadOnly, ] # не работает пока как надо - либо убрать либо откорректировать
     serializer_class = OfferPhotoSerializer  
 
     def get_queryset(self):
@@ -130,6 +130,13 @@ class OfferPhotoViewSet(ModelViewSet):
     
     def perform_create(self, serializer):  
         offer = get_object_or_404(Offer, id=self.kwargs.get("offer_id"))
+        author = offer.author
+
+        if self.request.user != author:
+            raise serializers.ValidationError(
+                detail="wrong user",
+                code=status.HTTP_400_BAD_REQUEST
+            )
 
         if OfferPhoto.objects.filter(offer = offer).count() >= 5: 
        
