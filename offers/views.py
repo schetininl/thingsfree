@@ -11,7 +11,7 @@ from rest_framework import filters, mixins, viewsets,serializers, status
 from rest_framework.response import Response #!
 
 from . import responses
-from .serializers import OfferClosedSerializer, OfferNotClosedSerializer, OfferCategorySerializer, OfferPhotoSerializer, OfferNotClosedHigherLevelSerializer
+from .serializers import OfferClosedSerializer, OfferNotClosedSerializer, OfferCategorySerializer, OfferPhotoSerializer
 from .models import OfferCategory, Offer, OfferPhoto
 from users.models import User
 #from .serializers import RegionSerializer, CitySerializer
@@ -23,7 +23,6 @@ class OfferViewSet(ModelViewSet):
     queryset = Offer.objects.filter(is_closed=False)
     permission_classes = [permissions.AllowAny,]
     serializer_class = OfferNotClosedSerializer
-    #serializer_class = OfferNotClosedHigherLevelSerializer
     filter_backends = [filters.OrderingFilter]
     ordering_fields = ['pub_date',]
 
