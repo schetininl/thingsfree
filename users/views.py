@@ -1,9 +1,11 @@
 from django.conf import settings
 from django.contrib.auth import get_user_model
+from django.shortcuts import get_object_or_404
 from django.db.utils import DatabaseError
 from phone_verify.serializers import PhoneSerializer, SMSVerificationSerializer
 from rest_framework.decorators import action, api_view, permission_classes
-from rest_framework.exceptions import AuthenticationFailed, PermissionDenied
+from rest_framework.exceptions import \
+    AuthenticationFailed, PermissionDenied, NotAuthenticated
 from rest_framework.permissions import AllowAny
 from rest_framework.viewsets import GenericViewSet
 from rest_framework_simplejwt.exceptions import TokenError
@@ -17,7 +19,7 @@ from social_core.backends.utils import load_backends as load_social_backends
 from social_django import utils as social_utils
 
 from . import responses, serializers, utils
-from .models import SocialMedia
+from .models import SocialMedia, Following
 
 User = get_user_model()
 
@@ -187,3 +189,84 @@ def convert_social_token(request):
         })
     except Exception:
         return responses.TOKEN_GENERATION_ERROR
+
+
+class FollowingViewSet(GenericViewSet):
+
+    def get_user(self, request, user_id):
+        if user_id == 'me':
+            is_authenticated = bool(request.user and request.user.is_authenticated)
+            if not is_authenticated:
+                raise NotAuthenticated
+            return request.user
+
+        return get_object_or_404(User, pk=user_id)
+
+    def get_follow_list_response(self, request, target_user_id):
+        """
+        Возвращает объект `Response` со списком подписчиков или
+        подписок (в зависимости от вызванного метода) пользователя с
+        идентификатором target_user_id.
+        """
+        assert self.action in ('followers', 'following')
+        target_user = self.get_user(request, target_user_id)
+        if self.action == 'followers':
+            queryset = target_user.followers.all()
+            lookup_field = 'follower'
+        else:
+            queryset = target_user.following.all()
+            lookup_field = 'author'
+
+        page = self.paginate_queryset(queryset)
+        serializer = serializers.ShortUserProfileSerializer(
+            [getattr(obj, lookup_field) for obj in page],
+            many=True
+        )
+        paginated_response = super().get_paginated_response(serializer.data)
+        return responses.create_response(
+            200000,
+            paginated_response.data
+        )
+
+    @action(detail=False, methods=['GET'], permission_classes=[AllowAny],
+            name='followers')
+    def followers(self, request, user_id):
+        return self.get_follow_list_response(request, user_id)
+
+    @action(detail=False, methods=['GET'], permission_classes=[AllowAny],
+            name='following')
+    def following(self, request, user_id):
+        return self.get_follow_list_response(request, user_id)
+
+    @action(detail=False, methods=['POST'], name='follow')
+    def follow(self, request, user_id):
+        author = self.get_user(request, user_id)
+        if author == request.user:
+            return responses.FOLLOWING_MYSELF
+
+        if not author.is_active:
+            return responses.USER_IS_BLOCKED
+
+        try:
+            following, created = Following.objects.get_or_create(
+                author=author,
+                follower=request.user
+            )
+            if not created:
+                return responses.FOLLOWING_EXISTS
+        except Exception:
+            return responses.FOLLOWING_CREATION_ERROR
+
+        return responses.FOLLOWING_CREATION_OK
+
+    @action(detail=False, methods=['POST'], name='unfollow')
+    def unfollow(self, request, user_id):
+        author = self.get_user(request, user_id)
+        deleted, _ = (
+            Following.objects
+            .filter(author=author, follower=request.user)
+            .delete()
+        )
+        if not deleted:
+            return responses.FOLLOWING_DOES_NOT_EXISTS
+        return responses.FOLLOWING_REMOVED

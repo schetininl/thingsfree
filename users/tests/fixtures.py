@@ -1,6 +1,8 @@
 import random
+from  itertools import cycle
 
 from django.conf import settings
+from django.contrib.auth import get_user_model
 from django.db.utils import IntegrityError
 from phone_verify.services import get_sms_backend
 import pytest
@@ -8,7 +10,7 @@ from rest_framework.test import APIClient
 from rest_framework_simplejwt.tokens import RefreshToken
 from twilio.base.exceptions import TwilioRestException
 
-from users.models import SocialMedia
+from users.models import SocialMedia, Following
 
 
 @pytest.fixture
@@ -78,6 +80,25 @@ def blocked_user(django_user_model, default_password):
         password=default_password,
         is_active=False
     )
+
+
+@pytest.fixture
+def user_generator(django_user_model, faker):
+    """Возвращает генератор, создающий пользователей."""
+    def generator():
+        while True:
+            try:
+                new_user = django_user_model.objects.create_user(
+                    username=faker.user_name(),
+                    first_name=faker.first_name(),
+                    last_name=faker.last_name(),
+                    email=faker.email(),
+                )
+            except Exception:
+                new_user = None
+            yield new_user
+
+    return generator()
 
 
 @pytest.fixture
@@ -346,3 +367,87 @@ def mock_user_save():
         raise IntegrityError
 
     return user_save
+
+
+@pytest.fixture
+def users_with_following(user_generator):
+    """
+    Возвращает список кортежей из трех элементов:
+    1) User, объект пользователя
+    2) set, множество пользователей, которые на него подписаны (followers)
+    3) set, множество пользователей, на которых он подписан (following)
+
+    Генерируется случайным образом.
+    """
+    users = set()
+    for _ in range(100):
+        new_user = next(user_generator)
+        if new_user is not None:
+            users.add(new_user)
+
+
+    sample_users = set(random.sample(users, 10))
+    results = [
+        (
+            user,
+            set(random.sample(users, 10)) - sample_users,
+            set(random.sample(users, 10)) - sample_users,
+        )
+        for user in sample_users
+    ]
+
+    objects_to_create = []
+    for user, followers, following in results:
+        objects_to_create.extend(
+            [Following(author=user, follower=follower) for follower in followers]
+        )
+        objects_to_create.extend(
+            [Following(author=author, follower=user) for author in following]
+        )
+
+    Following.objects.bulk_create(objects_to_create)
+
+    return results
+
+
+@pytest.fixture
+def authorized_user_followers(existent_user, user_generator):
+    """Список подписчиков текущего авторизованного пользователя."""
+
+    result = []
+    for _ in range(10):
+        follower = next(user_generator)
+        if follower is not None:
+            Following.objects.create(author=existent_user, follower=follower)
+            result.append(follower)
+
+    return result
+
+
+@pytest.fixture
+def authorized_user_following(existent_user, user_generator):
+    """Список подписок текущего авторизованного пользователя."""
+
+    result = []
+    for _ in range(10):
+        author = next(user_generator)
+        if author is not None:
+            Following.objects.create(author=author, follower=existent_user)
+            result.append(author)
+
+    return result
+
+
+@pytest.fixture
+def limit_offset_combinations():
+    """
+    Перечень комибнаций параметров `limit` и `offset`, передаваемых
+    в GET-запросах для управления размером и смещением результирующей выборки.
+    """
+    return cycle([
+        None,
+        {'limit': 5, 'offset': 0},
+        {'limit': 5, 'offset': 2},
+        {'limit': 100, 'offset': 0},
+        {'limit': 5, 'offset': 100}
+    ])

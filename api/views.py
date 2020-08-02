@@ -1,11 +1,16 @@
+import logging
+
 from django.core.exceptions import PermissionDenied
 from django.http.response import Http404
 from rest_framework import exceptions
 from rest_framework.response import Response
 from rest_framework.views import set_rollback
 
+logger = logging.getLogger(__name__)
+
 
 def exception_handler(exc, context):
+
     if isinstance(exc, Http404):
         exc = exceptions.NotFound()
     elif isinstance(exc, PermissionDenied):
@@ -32,6 +37,12 @@ def exception_handler(exc, context):
             status=exc.status_code,
             headers=headers
         )
+
+    view = context.get('view')
+    logger.error(
+        f'Exception in view {view}: '
+        f'{exc}'
+    )
 
     return Response(
         {
