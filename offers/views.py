@@ -9,6 +9,8 @@ from rest_framework import permissions
 from rest_framework.parsers import FileUploadParser,MultiPartParser,FormParser,JSONParser
 from rest_framework import filters, mixins, viewsets,serializers, status
 from rest_framework.response import Response #!
+from rest_framework.pagination import LimitOffsetPagination
+
 
 from . import responses
 from . import permissions as offer_permissions
@@ -23,6 +25,7 @@ from users.models import User
 class OfferViewSet(ModelViewSet):
     queryset = Offer.objects.filter(is_closed=False)
     permission_classes = [permissions.AllowAny, offer_permissions.IsOwnerOrReadOnly, ]
+    pagination_class = LimitOffsetPagination
     serializer_class = OfferNotClosedSerializer
     filter_backends = [filters.OrderingFilter]
     ordering_fields = ['pub_date',]
@@ -34,11 +37,14 @@ class OfferViewSet(ModelViewSet):
         
         queryset = self.filter_queryset(self.get_queryset())
         page = self.paginate_queryset(queryset)
+        
         if page is not None:
             serializer = self.get_serializer(page, many=True)
+            paginated_response = super().get_paginated_response(serializer.data)
+
             return responses.create_response(
                 200000,
-                serializer.data
+                paginated_response.data
                 )
         serializer = self.get_serializer(queryset, many=True)
         return  responses.create_response(
