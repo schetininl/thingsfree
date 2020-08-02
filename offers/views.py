@@ -1,6 +1,7 @@
 from django.shortcuts import get_object_or_404
 from django.shortcuts import render
 
+from django_filters.rest_framework import DjangoFilterBackend
 from django.contrib.auth import get_user_model
 
 from rest_framework import filters, mixins, viewsets
@@ -22,6 +23,7 @@ from users.models import User
 
 
 
+
 class OfferViewSet(ModelViewSet):
     queryset = Offer.objects.filter(is_closed=False)
     permission_classes = [ offer_permissions.IsOwnerOrReadOnly, ]
@@ -29,6 +31,10 @@ class OfferViewSet(ModelViewSet):
     serializer_class = OfferNotClosedSerializer
     filter_backends = [filters.OrderingFilter]
     ordering_fields = ['pub_date',]
+
+    filter_backends = [filters.OrderingFilter, DjangoFilterBackend]
+    ordering_fields = ['pub_date',]
+    filterset_fields = ['category','city','is_service' ]
 
     def perform_create(self, serializer):
         serializer.save(author=self.request.user)
