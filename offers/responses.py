@@ -36,5 +36,5 @@ OFFER_CREATION_OK = message(201100, _('Offer has been created.'))
 
 INVALID_OFFER_TITLE = message(400101, _('Please fill the title.'))
 INVALID_OFFER_DESCRIPTION = message(400102, _('Please fill the description.'))
-
+INVALID_OFFER_CATEGORY = message(400103, _('Please fill the category.'))
 OFFER_SAVING_ERROR = message(500101, _('Error in saving new offer.'))

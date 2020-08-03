@@ -11,7 +11,7 @@ from rest_framework.parsers import FileUploadParser,MultiPartParser,FormParser,J
 from rest_framework import filters, mixins, viewsets,serializers, status
 from rest_framework.response import Response #!
 from rest_framework.pagination import LimitOffsetPagination
-
+from rest_framework.exceptions import ValidationError
 
 from . import responses
 from . import permissions as offer_permissions
@@ -38,6 +38,32 @@ class OfferViewSet(ModelViewSet):
 
     def perform_create(self, serializer):
         serializer.save(author=self.request.user)
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+      
+        try:
+            serializer.is_valid(raise_exception=True)
+        except ValidationError:
+            if request.data.get("description") is None:            
+                return responses.INVALID_OFFER_DESCRIPTION
+            elif request.data.get("title") is None:                
+                return responses.INVALID_OFFER_TITLE 
+            elif request.data.get("category") is None:                
+                return responses.INVALID_OFFER_CATEGORY     
+            return responses.OFFER_SAVING_ERROR
+                  
+                    
+        except Exception:
+            return responses.OFFER_SAVING_ERROR # возможно не нужен (избыточен) и его може можно удалить?
+          
+        self.perform_create(serializer) 
+        return responses.create_response(
+               201100,
+               serializer.data,
+              
+           )    
+
     
     def list(self, request, *args, **kwargs):
         
