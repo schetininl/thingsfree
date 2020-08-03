@@ -32,11 +32,13 @@ class OfferNotClosedSerializer(serializers.ModelSerializer):
     author = serializers.SlugRelatedField(slug_field='username', read_only=True)
     category = serializers.SlugRelatedField(slug_field='id', queryset = OfferCategory.objects.all())
     city = serializers.SlugRelatedField(slug_field='id', queryset = City.objects.all(), required=False)
+
     
     class Meta:
         fields = ("pk", "author", "title", "description", "category", "is_service",
      "is_used", "city", "pub_date", "is_private", "moderation_statuses", "is_closed", "photos")       
         model = Offer
+
 
 class OfferPhotoSerializer(serializers.ModelSerializer):
     offer = serializers.SlugRelatedField(slug_field='id', read_only=True)
