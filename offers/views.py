@@ -21,12 +21,13 @@ from users.models import User
 #from .serializers import RegionSerializer, CitySerializer
 #from cities.models import City, Region
 
+from rest_framework.permissions import IsAuthenticatedOrReadOnly
 
 
 
 class OfferViewSet(ModelViewSet):
     #queryset = Offer.objects.filter(is_closed=False)
-    permission_classes = [ offer_permissions.IsOwnerOrReadOnly, ]
+    permission_classes = [ IsAuthenticatedOrReadOnly, offer_permissions.IsOwnerOrReadOnly, ]
     pagination_class = LimitOffsetPagination
     #serializer_class = OfferNotClosedSerializer
     #filter_backends = [filters.OrderingFilter]
@@ -160,7 +161,7 @@ class OfferCategoryViewSet(viewsets.GenericViewSet,
 class OfferPhotoViewSet(ModelViewSet):
 
     #queryset = OfferPhoto.objects.all()
-    permission_classes = [ offer_permissions.IsOfferAuthorOrReadOnly, ] 
+    permission_classes = [ IsAuthenticatedOrReadOnly,  offer_permissions.IsOfferAuthorOrReadOnly, ] 
     serializer_class = OfferPhotoSerializer  
 
     def get_queryset(self):
