@@ -16,6 +16,26 @@ class OfferCategorySerializer(serializers.ModelSerializer):
         fields = '__all__'
         model = OfferCategory
 
+class OfferNotClosedSerializer(serializers.ModelSerializer):
+    author = serializers.SlugRelatedField(slug_field='username', read_only=True)
+    category = serializers.SlugRelatedField(slug_field='id', queryset = OfferCategory.objects.all())
+    city = serializers.SlugRelatedField(slug_field='id', queryset = City.objects.all(), required=False)
+    
+    class Meta:
+        fields = ("pk", "author", "title", "description", "category", "is_service",
+     "is_used", "city", "pub_date", "is_private", "moderation_statuses", "is_closed", "photos")       
+        model = Offer
+        read_only_fields=("moderation_statuses",)
+         
+class OfferNotClosedSerializerModeration(serializers.ModelSerializer):
+    author = serializers.SlugRelatedField(slug_field='username', read_only=True)
+    category = serializers.SlugRelatedField(slug_field='id', queryset = OfferCategory.objects.all())
+    city = serializers.SlugRelatedField(slug_field='id', queryset = City.objects.all(), required=False)
+    
+    class Meta:
+        fields = ("pk", "author", "title", "description", "category", "is_service",
+     "is_used", "city", "pub_date", "is_private", "moderation_statuses", "is_closed", "photos")       
+        model = Offer
 
 class OfferClosedSerializer(serializers.ModelSerializer):
     author = serializers.SlugRelatedField(slug_field='username', read_only=True)
@@ -28,16 +48,16 @@ class OfferClosedSerializer(serializers.ModelSerializer):
         model = Offer
 
 
-class OfferNotClosedSerializer(serializers.ModelSerializer):
-    author = serializers.SlugRelatedField(slug_field='username', read_only=True)
-    category = serializers.SlugRelatedField(slug_field='id', queryset = OfferCategory.objects.all())
-    city = serializers.SlugRelatedField(slug_field='id', queryset = City.objects.all(), required=False)
+#class OfferNotClosedSerializer(serializers.ModelSerializer):
+#    author = serializers.SlugRelatedField(slug_field='username', read_only=True)
+#    category = serializers.SlugRelatedField(slug_field='id', queryset = OfferCategory.objects.all())
+#    city = serializers.SlugRelatedField(slug_field='id', queryset = City.objects.all(), required=False)
 
     
-    class Meta:
-        fields = ("pk", "author", "title", "description", "category", "is_service",
-     "is_used", "city", "pub_date", "is_private", "moderation_statuses", "is_closed", "photos")       
-        model = Offer
+#    class Meta:
+#        fields = ("pk", "author", "title", "description", "category", "is_service",
+#     "is_used", "city", "pub_date", "is_private", "moderation_statuses", "is_closed", "photos")       
+#        model = Offer
 
 
 class OfferPhotoSerializer(serializers.ModelSerializer):

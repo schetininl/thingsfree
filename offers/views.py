@@ -15,7 +15,7 @@ from rest_framework.exceptions import ValidationError
 
 from . import responses
 from . import permissions as offer_permissions
-from .serializers import OfferClosedSerializer, OfferNotClosedSerializer, OfferCategorySerializer, OfferPhotoSerializer
+from .serializers import OfferClosedSerializer, OfferNotClosedSerializer, OfferCategorySerializer, OfferPhotoSerializer, OfferNotClosedSerializerModeration
 from .models import OfferCategory, Offer, OfferPhoto
 from users.models import User
 #from .serializers import RegionSerializer, CitySerializer
@@ -25,16 +25,31 @@ from users.models import User
 
 
 class OfferViewSet(ModelViewSet):
-    queryset = Offer.objects.filter(is_closed=False)
+    #queryset = Offer.objects.filter(is_closed=False)
     permission_classes = [ offer_permissions.IsOwnerOrReadOnly, ]
     pagination_class = LimitOffsetPagination
-    serializer_class = OfferNotClosedSerializer
-    filter_backends = [filters.OrderingFilter]
+    #serializer_class = OfferNotClosedSerializer
+    #filter_backends = [filters.OrderingFilter]
     ordering_fields = ['pub_date',]
 
     filter_backends = [filters.OrderingFilter, DjangoFilterBackend]
     ordering_fields = ['pub_date',]
     filterset_fields = ['category','city','is_service' ]
+
+    def get_serializer_class(self):      
+        if self.request.user.is_staff:
+       # if offer_permissions.IsAdmin:    
+            return OfferNotClosedSerializerModeration
+        return OfferNotClosedSerializer
+
+    def get_queryset(self): 
+        #permission_classes = [ offer_permissions.IsAdmin, ] 
+         
+        if self.request.user.is_staff:
+        #if offer_permissions.IsAdmin: #не работает не знаю почему...
+            return Offer.objects.filter(is_closed=False)
+        return Offer.objects.filter(is_closed=False,moderation_statuses= "APPROVED")
+
 
     def perform_create(self, serializer):
         serializer.save(author=self.request.user)
@@ -57,11 +72,11 @@ class OfferViewSet(ModelViewSet):
         except Exception:
             return responses.OFFER_SAVING_ERROR # возможно не нужен (избыточен) и его може можно удалить?
           
-        self.perform_create(serializer) 
+        self.perform_create(serializer)
+
         return responses.create_response(
                201100,
                serializer.data,
-              
            )    
 
     
