@@ -1,13 +1,8 @@
 import uuid
 
 from django.db import models
-from django.contrib.auth import get_user_model
-from django.core import validators
-from django.core.exceptions import ValidationError
-from django.dispatch import receiver
-from django.db.models.signals import pre_save
 
-from cities.models import City#, Region
+from cities.models import City
 from users.models import User
 
 
@@ -67,39 +62,15 @@ class Offer(models.Model):
         verbose_name = 'Предложение'
         verbose_name_plural = 'Предложения'
 
-#@receiver(pre_save, sender=Offer)
-#def offer_pre_save(sender, instance, **kwargs):
-#    if instance.photos > 5: #тут переделать  instance.offer.photos + уточнить почему нет поля photo у offer 
-#        raise ValidationError("Вы не можете загрузить больше фотографий!")
-                
-
-# class OfferPhoto(models.Model):
-#     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-#     offer = models.ForeignKey(
-#         Offer, on_delete=models.CASCADE, related_name="photo")
-#     # поле для ссылки на изображение:
-#     link = models.ImageField(upload_to='offers/', blank=True, null=True)
-
-#     class Meta:
-#         verbose_name = 'Фотография предложения'
-#         verbose_name_plural = 'Фотографии предложения'
 
 def nameFile(instance, filename):
     return '/'.join(['photos', str(instance.link), filename])
 
+
 class OfferPhoto(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-
     offer = models.ForeignKey(Offer, on_delete=models.CASCADE, related_name="photos")
-    # поле для ссылки на изображение:
     link = models.ImageField(upload_to=nameFile, blank=True, null=True)
-
-    #def save(self,*args,**kwargs):
-        
-    #    if OfferPhoto.objects.filter(offer= self.offer.id).count()>=5:
-    #        return 
-    #    super(OfferPhoto,self).save(*args,**kwargs)
-            
     
     class Meta:
         verbose_name = 'Фотография предложения'

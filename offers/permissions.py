@@ -1,12 +1,7 @@
 from rest_framework import permissions
 
 
-from .models import Offer
-from django.shortcuts import get_object_or_404
-
-
-class IsOfferAuthorOrReadOnly(permissions.BasePermission): # не работает пока как надо - либо убрать либо откорректировать
-
+class IsOfferAuthorOrReadOnly(permissions.BasePermission):
 
     def has_object_permission(self, request, view, obj):
 
@@ -24,8 +19,7 @@ class IsOwnerOrReadOnly(permissions.BasePermission):
 
         if hasattr(obj, 'author'):
             return obj.author == request.user
-        #elif hasattr(obj, 'user'): # пока непонятно зачем доп проверка, может убрать??
-        #    return obj.user == request.user #  пока непонятно зачем доп проверка, может убрать??
+
 
 class IsAdminOrReadOnly(permissions.BasePermission):
 
@@ -37,10 +31,3 @@ class IsAdminOrReadOnly(permissions.BasePermission):
             return request.user.is_admin
 
         return False
-
-
-#class IsAdmin(permissions.BasePermission):
-#    def has_permission(self, request, view):
-#        if request.user.is_authenticated:
-#            return request.user.is_staff
-#        return False

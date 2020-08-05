@@ -1,6 +1,5 @@
 from django.utils.translation import gettext_lazy as _
 from rest_framework.response import Response
-import requests
 
 
 def create_response(status, body):
@@ -9,7 +8,7 @@ def create_response(status, body):
     return Response(
         data={
             'status': status,
-            'offers': body,
+            'body': body,
             'user_menu_links': {
                 "link_new_offer": "/offers/",
       
@@ -20,7 +19,7 @@ def create_response(status, body):
                 "link_following": "users/me/following",
       
                 "link_messages": "To Be Determinted"},
-            'manage_profile':{
+            'manage_profile': {
                 "edit_profile_link": "To Be Determinted",  
                 "logout_profile_link": "To Be Determinted"
         }},
