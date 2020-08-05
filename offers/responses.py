@@ -8,7 +8,7 @@ def create_response(status, body):
     return Response(
         data={
             'status': status,
-            'offers': body,
+            'body': body,
             'user_menu_links': {
                 "link_new_offer": "/offers/",
       
