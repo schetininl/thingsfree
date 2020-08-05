@@ -14,4 +14,7 @@ def pytest_configure():
         'no_token': 'в теле ответа не содержится токен доступа',
         'no_token_life': 'в теле ответа не содержится время жизни токена',
         'no_refresh_token': 'в теле ответа не содежится refresh-токен',
+        'wrong_total_count': 'в поле ответа `count` неверное значение',
+        'wrong_results_size': 'неверный размер выборки в ответе',
+        'needless_following': 'создается ненужная подписка',
     }

@@ -5,6 +5,11 @@ from . import views
 
 router = DefaultRouter()
 router.register('phone', views.PhoneVerificationViewSet, basename='phone')
+router.register(
+    r'users/(?P<user_id>.+)',
+    views.FollowingViewSet,
+    basename='following'
+)
 
 urlpatterns = [
     path('', include(router.urls)),
