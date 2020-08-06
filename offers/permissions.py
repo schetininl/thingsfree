@@ -14,8 +14,8 @@ class IsOfferAuthorOrReadOnly(permissions.BasePermission):
         elif request.method == 'POST':
             return obj.author == request.user
 
-        offer_n = get_object_or_404(Offer, id=obj.offer.id)
-        return offer_n.author == request.user
+        offer_obj = get_object_or_404(Offer, id=obj.offer.id)
+        return offer_obj.author == request.user
 
 
 class IsOwnerOrReadOnly(permissions.BasePermission):
