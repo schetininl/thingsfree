@@ -42,6 +42,7 @@ class OfferNotClosedSerializerModeration(serializers.ModelSerializer):
         model = Offer
 
 
+#пока не используется, нужен будет для вью по закрытым офферам
 class OfferClosedSerializer(serializers.ModelSerializer):
     author = serializers.SlugRelatedField(slug_field='username', read_only=True)
     category = serializers.SlugRelatedField(slug_field='id',
