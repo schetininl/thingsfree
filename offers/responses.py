@@ -10,9 +10,9 @@ def create_response(status, body):
             'status': status,
             'body': body,
             'user_menu_links': {
-                "link_new_offer": "/offers/",
+                "link_new_offer": "http://www.thingsfree/offers/",
       
-                "link_my_offers": "/offers/{id}",
+                "link_my_offers": "http://www.thingsfree/offers/{id}",
     
                 "link_my_likes": "To Be Determinted",
       
@@ -20,7 +20,7 @@ def create_response(status, body):
       
                 "link_messages": "To Be Determinted"},
             'manage_profile': {
-                "edit_profile_link": "To Be Determinted",  
+                "edit_profile_link": "http://www.thingsfree/users/me/",  
                 "logout_profile_link": "To Be Determinted"
         }},
         status=http_status

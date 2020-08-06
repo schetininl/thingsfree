@@ -16,9 +16,7 @@ from .serializers import (OfferCategorySerializer, OfferNotClosedSerializer,
 
 class OfferViewSet(ModelViewSet):
     permission_classes = [IsAuthenticatedOrReadOnly, offer_permissions.IsOwnerOrReadOnly, ]
-    pagination_class = LimitOffsetPagination
-    ordering_fields = ['pub_date', ]
-
+    pagination_class = LimitOffsetPagination    
     filter_backends = [filters.OrderingFilter, DjangoFilterBackend]
     ordering_fields = ['pub_date', ]
     filterset_fields = ['category', 'city', 'is_service']
@@ -28,8 +26,7 @@ class OfferViewSet(ModelViewSet):
             return OfferNotClosedSerializerModeration
         return OfferNotClosedSerializer
 
-    def get_queryset(self): 
-         
+    def get_queryset(self):          
         if self.request.user.is_staff:
             return Offer.objects.filter(is_closed=False)
         return Offer.objects.filter(is_closed=False, moderation_statuses="APPROVED")
