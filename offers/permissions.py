@@ -1,4 +1,7 @@
+from django.shortcuts import get_object_or_404
 from rest_framework import permissions
+
+from .models import Offer
 
 
 class IsOfferAuthorOrReadOnly(permissions.BasePermission):
@@ -8,7 +11,11 @@ class IsOfferAuthorOrReadOnly(permissions.BasePermission):
         if request.method in permissions.SAFE_METHODS:
             return True
 
-        return obj.author == request.user
+        elif request.method == 'POST':
+            return obj.author == request.user
+
+        offer_obj = get_object_or_404(Offer, id=obj.offer.id)
+        return offer_obj.author == request.user
 
 
 class IsOwnerOrReadOnly(permissions.BasePermission):
